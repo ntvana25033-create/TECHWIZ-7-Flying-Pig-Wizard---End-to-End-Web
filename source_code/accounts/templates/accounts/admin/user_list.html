@@ -1,0 +1,15 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Quản lý tài khoản | Campus Coin{% endblock %}
+{% block page_name %}Quản lý tài khoản{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><p class="admin-section-kicker">ACCOUNTS</p><h1>Người dùng hệ thống</h1><p>Tìm kiếm, lọc, tạo mới và quản lý quyền truy cập.</p></div><a class="btn primary" href="{% url 'accounts:admin_user_create' %}">+ Tạo tài khoản</a></div>
+<form class="admin-filters" method="get">
+    <input class="form-control" type="search" name="q" value="{{ keyword }}" placeholder="Email hoặc họ tên">
+    <select class="form-control" name="role"><option value="">Tất cả vai trò</option>{% for value, label in roles %}<option value="{{ value }}" {% if role == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <select class="form-control" name="status"><option value="">Tất cả trạng thái</option>{% for value, label in statuses %}<option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+    <button class="btn primary" type="submit">Lọc</button><a class="btn" href="{% url 'accounts:admin_user_list' %}">Xóa lọc</a>
+</form>
+<section class="admin-card"><div class="table-wrap"><table><thead><tr><th>ID</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
+{% for item in users %}<tr><td>#{{ item.user_id }}</td><td>{{ item.profile.full_name }}</td><td>{{ item.email }}</td><td>{{ item.role.get_role_name_display }}</td><td><span class="status-chip status-{{ item.status|lower }}">{{ item.get_status_display }}</span></td><td>{{ item.created_at|date:'d/m/Y' }}</td><td><a href="{% url 'accounts:admin_user_detail' item.user_id %}">Chi tiết</a></td></tr>{% empty %}<tr><td colspan="7">Không có tài khoản phù hợp.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

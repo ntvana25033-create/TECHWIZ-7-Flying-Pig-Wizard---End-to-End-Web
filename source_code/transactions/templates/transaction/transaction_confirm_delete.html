@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận Xóa</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0fdf4; 
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(34, 197, 94, 0.15);
+            border-top: 5px solid #22c55e; 
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #166534;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        p {
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 16px;
+            color: #4b5563;
+        }
+
+        strong {
+            color: #15803d; 
+            font-size: 18px;
+        }
+
+        form {
+            display: flex;
+            justify-content: center;
+            gap: 15px; 
+        }
+
+        button[type="submit"] {
+            background-color: #ef4444; 
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+            font-weight: 600;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #dc2626;
+        }
+
+        a.btn-cancel {
+            background-color: #22c55e;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: background-color 0.2s ease-in-out;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        a.btn-cancel:hover {
+            background-color: #16a34a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Xác nhận Xóa Giao dịch</h1>
+        <p>Bạn có chắc chắn muốn xóa giao dịch: <br>
+            <strong>{{ object.amount }} VND - {{ object.category.name|default:"Không có danh mục" }}</strong> <br>
+            vào ngày <strong>{{ object.date|date:"d/m/Y" }}</strong> không?
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit">Có, hãy xóa</button>
+            <a href="{% url 'transactions:transaction-list' %}" class="btn-cancel">Không, quay lại</a>
+        </form>
+    </div>
+</body>
+</html>

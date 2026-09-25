@@ -1,0 +1,7 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Hồ sơ Admin | Campus Coin{% endblock %}
+{% block page_name %}Hồ sơ Admin{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><p class="admin-section-kicker">ACCOUNT SECURITY</p><h1>Hồ sơ quản trị</h1><p>Cập nhật thông tin đăng nhập và bảo mật tài khoản quản trị.</p></div></div>
+<div class="admin-two-col"><section class="admin-card"><h2>Thông tin cơ bản</h2><form method="post" class="admin-form">{% csrf_token %}{{ form.as_p }}<button class="btn primary" type="submit">Lưu thay đổi</button></form></section><section class="admin-card"><h2>Bảo mật</h2><div class="security-links"><a href="{% url 'accounts:admin_change_password' %}"><strong>Đổi mật khẩu</strong><span>Cập nhật mật khẩu và đăng xuất các phiên khác.</span></a><a href="{% url 'accounts:admin_sessions' %}"><strong>Phiên đăng nhập</strong><span>Xem và thu hồi phiên quản trị đang tồn tại.</span></a></div></section></div>
+{% endblock %}

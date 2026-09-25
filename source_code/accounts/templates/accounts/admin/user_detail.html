@@ -1,0 +1,15 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Chi tiết tài khoản | Campus Coin{% endblock %}
+{% block page_name %}Chi tiết tài khoản{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><a class="back-link" href="{% url 'accounts:admin_user_list' %}">← Danh sách tài khoản</a><h1>{{ target.profile.full_name }}</h1><p>{{ target.email }}</p></div><a class="btn" href="{% url 'accounts:admin_user_edit' target.user_id %}">Chỉnh sửa</a></div>
+<section class="admin-card"><div class="detail-grid">
+<div><span>ID</span><strong>#{{ target.user_id }}</strong></div><div><span>Vai trò</span><strong>{{ target.role.get_role_name_display }}</strong></div><div><span>Trạng thái</span><strong>{{ target.get_status_display }}</strong></div><div><span>Năm học</span><strong>{{ target.profile.academic_year|default:'-' }}</strong></div><div><span>Đăng nhập sai</span><strong>{{ target.failed_login_attempts }}</strong></div><div><span>Đăng nhập gần nhất</span><strong>{{ target.last_login|date:'d/m/Y H:i'|default:'-' }}</strong></div><div><span>Ngày tạo</span><strong>{{ target.created_at|date:'d/m/Y H:i' }}</strong></div><div><span>Khóa đến</span><strong>{{ target.locked_until|date:'d/m/Y H:i'|default:'-' }}</strong></div>
+</div>
+<div class="admin-actions">
+<form method="post" action="{% url 'accounts:admin_user_toggle_status' target.user_id %}">{% csrf_token %}<button class="btn {% if target.status == 'ACTIVE' %}danger{% else %}primary{% endif %}" type="submit">{% if target.status == 'ACTIVE' %}Vô hiệu hóa{% else %}Kích hoạt lại{% endif %}</button></form>
+<form method="post" action="{% url 'accounts:admin_user_send_reset' target.user_id %}">{% csrf_token %}<button class="btn" type="submit">Gửi link reset mật khẩu</button></form>
+{% if target.user_id != user.user_id %}<form method="post" action="{% url 'accounts:admin_user_delete' target.user_id %}" onsubmit="return confirm('Xóa mềm tài khoản này khỏi hệ thống?')">{% csrf_token %}<button class="btn danger-outline" type="submit">Xóa tài khoản</button></form>{% endif %}
+</div></section>
+<section class="admin-card"><div class="admin-card-head"><div><h2>10 phiên đăng nhập gần nhất</h2><p>Theo dõi hoạt động phiên của tài khoản.</p></div></div>{% for item in sessions %}<div class="session-line"><strong>{{ item.ip_address|default:'Không rõ IP' }}</strong> · {{ item.last_activity_at|date:'d/m/Y H:i' }} · {% if item.revoked_at %}<span class="negative">Đã thu hồi</span>{% elif item.is_active %}<span class="positive">Đang hiệu lực</span>{% else %}Đã hết hạn{% endif %}</div>{% empty %}<p>Chưa có phiên đăng nhập.</p>{% endfor %}</section>
+{% endblock %}

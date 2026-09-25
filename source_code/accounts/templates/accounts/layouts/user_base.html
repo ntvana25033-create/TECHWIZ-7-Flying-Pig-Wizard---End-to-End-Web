@@ -1,0 +1,43 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Campus Coin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body data-authenticated="1" data-portal="user">
+<div class="app-shell">
+    <aside class="sidebar user-sidebar">
+        <a class="brand" href="{% url 'transactions:transaction:list' %}">Campus Coin <small>User Portal</small></a>
+        <nav class="side-nav">
+            <a href="{% url 'transactions:transaction:list' %}">Giao dịch</a>
+            <a href="{% url 'transactions:transaction:category_list' %}">Hạng mục</a>
+            <a href="{% url 'transactions:transaction:import' %}">Nhập CSV</a>
+            <a href="{% url 'reports:monthly' %}">Báo cáo</a>
+            <a class="notification-link" href="{% url 'notifications:list' %}">Thông báo <span id="notification-badge" class="nav-badge" {% if not global_unread_notifications %}hidden{% endif %}>{{ global_unread_notifications }}</span></a>
+        </nav>
+        <div class="side-bottom">
+            <a href="{% url 'accounts:profile' %}">Hồ sơ cá nhân</a>
+            <a href="{% url 'accounts:sessions' %}">Phiên đăng nhập</a>
+            <a href="{% url 'accounts:logout' %}">Đăng xuất</a>
+        </div>
+    </aside>
+    <section class="main-shell">
+        <header class="workspace-top">
+            <div class="portal-chip">USER</div>
+            <div><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></div>
+        </header>
+        <main class="container">
+            {% if messages %}{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </section>
+</div>
+<div id="toast-stack" class="toast-stack"></div>
+<script src="{% static 'notifications/js/realtime.js' %}"></script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

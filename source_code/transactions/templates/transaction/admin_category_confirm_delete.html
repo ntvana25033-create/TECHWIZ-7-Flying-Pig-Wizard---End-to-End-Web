@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Xác nhận Xóa</title>
+    <style>
+        :root {
+            --primary-green: #2E7D32;
+            --secondary-green: #4CAF50;
+            --bg-color: #f7fcf7;
+            --text-dark: #2c3e50;
+            --danger-red: #d32f2f;
+            --danger-hover: #b71c1c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .confirm-card {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            border-top: 5px solid var(--primary-green);
+        }
+
+        h1 {
+            color: var(--primary-green);
+            margin-top: 0;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #546e7a;
+            line-height: 1.6;
+        }
+
+        strong {
+            color: var(--primary-green);
+            font-size: 18px;
+            display: block;
+            margin-top: 5px;
+        }
+
+        .btn-group {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button[type="submit"] {
+            background-color: var(--danger-red);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: var(--danger-hover);
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            background-color: var(--secondary-green);
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background-color: var(--primary-green);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="confirm-card">
+        <h1>Bạn có chắc chắn muốn xóa?</h1>
+        <p>Hệ thống sẽ xóa vĩnh viễn danh mục: 
+            <strong>{{ object.name }}</strong> 
+            ({{ object.get_type_display }})
+        </p>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div class="btn-group">
+                <button type="submit">Có, hãy xóa</button>
+                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">Không, quay lại</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

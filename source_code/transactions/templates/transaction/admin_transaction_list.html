@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Tất cả Giao dịch Hệ thống</title>
+    <style>
+        :root {
+            --primary-green: #2E7D32;
+            --secondary-green: #4CAF50;
+            --light-green: #E8F5E9;
+            --hover-green: #C8E6C9;
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --bg-color: #f7fcf7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1100px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-top: 5px solid var(--primary-green);
+        }
+
+        h1 {
+            color: var(--primary-green);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .top-actions {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .btn-back {
+            display: inline-block;
+            background-color: #546e7a;
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background-color: #37474f;
+            transform: translateY(-2px);
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: var(--hover-green);
+            margin-bottom: 25px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--hover-green);
+        }
+
+        th {
+            background-color: var(--secondary-green);
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--light-green);
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-green);
+            transition: background-color 0.3s ease;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 30px !important;
+        }
+
+        .badge {
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-income { background-color: #c8e6c9; color: #2e7d32; }
+        .badge-expense { background-color: #ffcdd2; color: #c62828; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Danh sách Toàn bộ Giao dịch (Chỉ Xem)</h1>
+        
+        <div class="top-actions">
+            <a href="{% url 'transactions:admin-category-list' %}" class="btn-back">Quay lại Quản lý Danh mục</a>
+        </div>
+        
+        <hr>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Người dùng</th>
+                    <th>Ngày</th>
+                    <th>Danh mục</th>
+                    <th>Loại</th>
+                    <th>Số tiền (VND)</th>
+                    <th>Mô tả</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                    <tr>
+                        <td><strong>{{ txn.user.email }}</strong></td>
+                        <td>{{ txn.date|date:"d/m/Y" }}</td>
+                        <td>{{ txn.category.name|default:"Không có" }}</td>
+                        <td>
+                            {% if txn.type == 'income' %}
+                                <span class="badge badge-income">{{ txn.get_type_display }}</span>
+                            {% else %}
+                                <span class="badge badge-expense">{{ txn.get_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ txn.amount }}</td>
+                        <td>{{ txn.description|default:"-" }}</td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">Hệ thống chưa có giao dịch nào.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

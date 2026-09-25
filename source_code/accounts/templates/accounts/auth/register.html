@@ -1,0 +1,55 @@
+{% extends 'accounts/layouts/auth_base.html' %}
+{% load static %}
+{% block title %}Đăng ký | Campus Coin{% endblock %}
+{% block content %}
+<div class="auth-card-head">
+    <span class="auth-kicker">BẮT ĐẦU MIỄN PHÍ</span>
+    <h2>Tạo tài khoản sinh viên</h2>
+    <p>Thiết lập hồ sơ cơ bản. Bạn có thể chỉnh sửa lại thông tin tài chính sau.</p>
+</div>
+
+<form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}
+        <div class="alert error">{{ form.non_field_errors }}</div>
+    {% endif %}
+
+    <div class="form-grid">
+        <div class="span-2">{% include 'accounts/partials/field.html' with field=form.full_name %}</div>
+        <div class="span-2">{% include 'accounts/partials/field.html' with field=form.email %}</div>
+        {% include 'accounts/partials/field.html' with field=form.academic_year %}
+        {% include 'accounts/partials/field.html' with field=form.monthly_allowance %}
+        <div class="span-2">{% include 'accounts/partials/field.html' with field=form.monthly_savings_goal %}</div>
+
+        <div class="password-field">
+            {% include 'accounts/partials/field.html' with field=form.password1 %}
+            <button class="password-toggle" type="button" data-toggle-password="id_password1" aria-label="Hiện mật khẩu">Hiện</button>
+        </div>
+        <div class="password-field">
+            {% include 'accounts/partials/field.html' with field=form.password2 %}
+            <button class="password-toggle" type="button" data-toggle-password="id_password2" aria-label="Hiện mật khẩu">Hiện</button>
+        </div>
+    </div>
+
+    <div class="password-meter" aria-live="polite">
+        <div class="meter-track"><span id="passwordStrengthBar"></span></div>
+        <small id="passwordStrengthText">Mật khẩu nên có ít nhất 8 ký tự.</small>
+    </div>
+
+    <label class="terms-row" for="{{ form.accept_terms.id_for_label }}">
+        {{ form.accept_terms }}
+        <span>{{ form.accept_terms.label }}</span>
+    </label>
+    {% for error in form.accept_terms.errors %}<small class="field-error block">{{ error }}</small>{% endfor %}
+
+    <button type="submit" class="primary-btn">
+        <span>Tạo tài khoản</span><span aria-hidden="true">→</span>
+    </button>
+</form>
+
+<div class="auth-footer">
+    <span>Đã có tài khoản?</span>
+    <a href="{% url 'accounts:login' %}">Đăng nhập</a>
+</div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/register.js' %}"></script>{% endblock %}

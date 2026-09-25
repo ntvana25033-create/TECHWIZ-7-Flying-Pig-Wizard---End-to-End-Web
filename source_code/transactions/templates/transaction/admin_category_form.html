@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if object %}Sửa Danh mục{% else %}Thêm Danh mục{% endif %}</title>
+    <style>
+        :root {
+            --primary-green: #2E7D32;
+            --secondary-green: #4CAF50;
+            --bg-color: #f7fcf7;
+            --text-dark: #2c3e50;
+            --input-border: #cfd8dc;
+            --input-focus: #a5d6a7;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .form-card {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+            width: 100%;
+            max-width: 450px;
+            border-top: 5px solid var(--primary-green);
+        }
+
+        h1 {
+            color: var(--primary-green);
+            margin-top: 0;
+            font-size: 24px;
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        form p {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 18px;
+        }
+
+        form label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-size: 14px;
+        }
+
+        form input[type="text"],
+        form select,
+        form input[type="number"] {
+            padding: 12px;
+            border: 1px solid var(--input-border);
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        form input[type="text"]:focus,
+        form select:focus,
+        form input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary-green);
+            box-shadow: 0 0 0 3px var(--input-focus);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        button[type="submit"] {
+            flex: 1;
+            background-color: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #1b5e20;
+            transform: translateY(-2px);
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background-color: #f5f5f5;
+            color: #555;
+            text-decoration: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ddd;
+            transition: all 0.3s ease, transform 0.2s ease;
+        }
+
+        .btn-cancel:hover {
+            background-color: #e0e0e0;
+            color: #333;
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body>
+    <div class="form-card">
+        <h1>{% if object %}Sửa Danh mục{% else %}Thêm Danh mục Mới{% endif %}</h1>
+        
+        <form method="post">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+            
+            <div class="btn-group">
+                <button type="submit">Lưu lại</button>
+                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

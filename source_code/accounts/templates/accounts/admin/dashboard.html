@@ -1,0 +1,20 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Tổng quan Admin | Campus Coin{% endblock %}
+{% block page_name %}Tổng quan hệ thống{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><p class="admin-section-kicker">DASHBOARD</p><h1>Tổng quan quản trị</h1><p>Theo dõi trạng thái tài khoản và các vấn đề truy cập chính.</p></div><a class="btn primary" href="{% url 'accounts:admin_user_create' %}">+ Tạo tài khoản</a></div>
+<div class="admin-stat-grid">
+    <article><span>Tổng sinh viên</span><strong>{{ total_students }}</strong></article>
+    <article><span>Đang hoạt động</span><strong>{{ active_students }}</strong></article>
+    <article><span>Tạm khóa</span><strong>{{ locked_students }}</strong></article>
+    <article><span>Vô hiệu hóa</span><strong>{{ disabled_students }}</strong></article>
+    <article><span>Quản trị viên</span><strong>{{ total_admins }}</strong></article>
+</div>
+<section class="admin-card">
+    <div class="admin-card-head"><div><h2>Tài khoản sinh viên mới</h2><p>8 tài khoản gần nhất được tạo trong hệ thống.</p></div><a href="{% url 'accounts:admin_user_list' %}">Xem tất cả →</a></div>
+    <div class="table-wrap"><table><thead><tr><th>Họ tên</th><th>Email</th><th>Trạng thái</th><th>Ngày tạo</th><th></th></tr></thead><tbody>
+    {% for item in recent_users %}<tr><td>{{ item.profile.full_name }}</td><td>{{ item.email }}</td><td><span class="status-chip status-{{ item.status|lower }}">{{ item.get_status_display }}</span></td><td>{{ item.created_at|date:'d/m/Y H:i' }}</td><td><a href="{% url 'accounts:admin_user_detail' item.user_id %}">Chi tiết</a></td></tr>
+    {% empty %}<tr><td colspan="5">Chưa có tài khoản sinh viên.</td></tr>{% endfor %}
+    </tbody></table></div>
+</section>
+{% endblock %}

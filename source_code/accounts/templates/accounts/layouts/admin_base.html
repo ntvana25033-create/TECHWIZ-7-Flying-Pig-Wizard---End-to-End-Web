@@ -1,0 +1,46 @@
+{% load static %}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Admin | Campus Coin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'accounts/css/admin.css' %}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body data-authenticated="1" data-portal="admin">
+<div class="admin-shell">
+    <aside class="admin-sidebar">
+        <a class="admin-brand" href="{% url 'accounts:admin_dashboard' %}"><span>CC</span><div>Campus Coin<small>Administration</small></div></a>
+        <nav class="admin-nav">
+            <a href="{% url 'accounts:admin_dashboard' %}">Tổng quan</a>
+            <a href="{% url 'accounts:admin_user_list' %}">Quản lý tài khoản</a>
+            <a href="{% url 'accounts:admin_user_create' %}">Tạo tài khoản</a>
+            <a href="{% url 'transactions:transaction_admin:dashboard' %}">Quản trị tài chính</a>
+            <a href="{% url 'transactions:transaction_admin:category_list' %}">Hạng mục</a>
+            <a href="{% url 'transactions:transaction_admin:transaction_list' %}">Giao dịch</a>
+            <a href="{% url 'transactions:transaction_admin:import_list' %}">CSV imports</a>
+            <a href="{% url 'transactions:transaction_admin:notifications' %}">Thông báo</a>
+            <a href="{% url 'transactions:transaction_admin:report' %}">Báo cáo</a>
+        </nav>
+        <div class="admin-side-bottom">
+            <a href="{% url 'accounts:admin_profile' %}">Hồ sơ Admin</a>
+            <a href="{% url 'accounts:admin_sessions' %}">Bảo mật phiên</a>
+            <a href="{% url 'accounts:admin_logout' %}">Đăng xuất</a>
+        </div>
+    </aside>
+    <section class="admin-main">
+        <header class="admin-topbar">
+            <div><span class="admin-eyebrow">CỔNG QUẢN TRỊ</span><strong>{% block page_name %}Campus Coin{% endblock %}</strong></div>
+            <div class="admin-account"><span>{{ user.get_full_name }}</span><small>{{ user.email }}</small></div>
+        </header>
+        <main class="admin-content">
+            {% if messages %}{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </section>
+</div>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

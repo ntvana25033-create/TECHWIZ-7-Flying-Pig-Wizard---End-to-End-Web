@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Quản lý Giao dịch</title>
+    <style>
+        :root {
+            --primary-green: #2E7D32; 
+            --secondary-green: #4CAF50; 
+            --light-green: #E8F5E9; 
+            --hover-green: #C8E6C9; 
+            --text-dark: #2c3e50;
+            --text-light: #ffffff;
+            --bg-color: #f4fbcf;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f7fcf7; 
+            color: var(--text-dark);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1000px;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-top: 5px solid var(--primary-green);
+        }
+
+        h1 {
+            color: var(--primary-green);
+            text-align: center;
+            margin-top: 0;
+            margin-bottom: 25px;
+        }
+
+        .action-links {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .action-links a {
+            display: inline-block;
+            background-color: var(--secondary-green);
+            color: var(--text-light);
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.2s ease;
+        }
+
+        .action-links a:hover {
+            background-color: var(--primary-green);
+            transform: translateY(-2px); 
+        }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: var(--hover-green);
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 8px 8px 0 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--hover-green);
+        }
+
+        th {
+            background-color: var(--secondary-green);
+            color: var(--text-light);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: var(--light-green);
+        }
+
+        tbody tr:hover {
+            background-color: var(--hover-green);
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-action {
+            text-decoration: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: bold;
+            display: inline-block;
+            transition: all 0.3s ease;
+        }
+
+        .btn-edit {
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+            background-color: transparent;
+        }
+
+        .btn-edit:hover {
+            background-color: var(--primary-green);
+            color: var(--text-light);
+        }
+
+        .btn-delete {
+            color: #d32f2f;
+            border: 1px solid #d32f2f;
+            background-color: transparent;
+            margin-left: 5px;
+        }
+
+        .btn-delete:hover {
+            background-color: #d32f2f;
+            color: var(--text-light);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            padding: 30px !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Lịch sử Giao dịch của {{ user.email }}</h1>
+        
+        <div class="action-links">
+            <a href="{% url 'transactions:transaction-create' %}">+ Thêm giao dịch mới</a>
+            <a href="{% url 'transactions:category-list' %}">Xem danh mục hệ thống</a>
+        </div>
+        
+        <hr>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Ngày</th>
+                    <th>Danh mục</th>
+                    <th>Loại</th>
+                    <th>Số tiền (VND)</th>
+                    <th>Mô tả</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for txn in transactions %}
+                    <tr>
+                        <td>{{ txn.date|date:"d/m/Y" }}</td>
+                        <td>{{ txn.category.name|default:"Không có" }}</td>
+                        <td>
+                            {% if txn.type == 'income' %}
+                                <span style="color: #2E7D32; font-weight: bold;">{{ txn.get_type_display }}</span>
+                            {% else %}
+                                <span style="color: #d32f2f; font-weight: bold;">{{ txn.get_type_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ txn.amount }}</td>
+                        <td>{{ txn.description }}</td>
+                        <td>
+                            <a href="{% url 'transactions:transaction-update' txn.pk %}" class="btn-action btn-edit">Sửa</a>
+                            <a href="{% url 'transactions:transaction-delete' txn.pk %}" class="btn-action btn-delete">Xóa</a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="empty-state">Bạn chưa có giao dịch nào.</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

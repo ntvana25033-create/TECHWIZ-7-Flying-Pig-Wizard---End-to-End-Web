@@ -1,0 +1,6 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Hồ sơ | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head"><div><p class="eyebrow">TÀI KHOẢN</p><h1>Hồ sơ cá nhân</h1><p class="muted">Cập nhật thông tin và thiết lập tài chính cá nhân.</p></div><div class="inline-actions"><a class="btn" href="{% url 'accounts:change_password' %}">Đổi mật khẩu</a><a class="btn" href="{% url 'accounts:sessions' %}">Phiên đăng nhập</a></div></div>
+<section class="card narrow"><form method="post" enctype="multipart/form-data">{% csrf_token %}{{ form.as_p }}<button class="btn primary" type="submit">Lưu thay đổi</button></form></section>
+{% endblock %}

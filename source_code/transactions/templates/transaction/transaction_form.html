@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>{% if object %}Sửa giao dịch{% else %}Thêm giao dịch{% endif %}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #e8f5e9;
+            color: #333;
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 500px;
+            border-top: 6px solid #4caf50; 
+        }
+
+        h1 {
+            text-align: center;
+            margin-top: 0;
+            color: #1b5e20; 
+            margin-bottom: 25px;
+        }
+
+        form p {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 18px;
+        }
+
+        form label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #2e7d32; 
+        }
+
+        form input[type="text"],
+        form input[type="number"],
+        form input[type="date"],
+        form select,
+        form textarea {
+            padding: 10px 12px;
+            border: 1px solid #a5d6a7;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+            background-color: #fafafa;
+        }
+
+        form input:focus,
+        form select:focus,
+        form textarea:focus {
+            border-color: #4caf50;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.2);
+            background-color: #ffffff;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+        }
+
+        button[type="submit"] {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #388e3c;
+        }
+        
+        button[type="submit"]:active {
+            transform: scale(0.98);
+        }
+
+        .btn-cancel {
+            color: #757575;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.3s;
+        }
+
+        .btn-cancel:hover {
+            color: #d32f2f; 
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>{% if object %}Sửa giao dịch{% else %}Thêm giao dịch mới{% endif %}</h1>
+        
+        <form method="post" id="transactionForm" data-categories-url="{% url 'transactions:ajax_load_categories' %}">
+            {% csrf_token %}
+            
+            {{ form.as_p }}
+            
+            <div class="actions">
+                <button type="submit">Lưu lại</button>
+                <a href="{% url 'transactions:transaction-list' %}" class="btn-cancel">Hủy</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const typeSelect = document.getElementById('id_type');
+            const categorySelect = document.getElementById('id_category');
+            
+            typeSelect.addEventListener('change', function() {
+                const url = document.getElementById('transactionForm').getAttribute('data-categories-url');
+                const selectedType = typeSelect.value;
+                
+                fetch(`${url}?type=${selectedType}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        categorySelect.innerHTML = '<option value="">---------</option>';
+                        
+                        data.forEach(function(category) {
+                            const option = document.createElement('option');
+                            option.value = category.id;
+                            option.textContent = category.name;
+                            categorySelect.appendChild(option);
+                        });
+                    })
+                    .catch(error => console.error('Error fetching categories:', error));
+            });
+        });
+    </script>
+</body>
+</html>

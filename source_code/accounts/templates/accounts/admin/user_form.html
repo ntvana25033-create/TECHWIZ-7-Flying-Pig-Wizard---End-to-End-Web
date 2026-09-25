@@ -1,0 +1,7 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}{% if mode == 'create' %}Tạo tài khoản{% else %}Sửa tài khoản{% endif %} | Campus Coin{% endblock %}
+{% block page_name %}{% if mode == 'create' %}Tạo tài khoản{% else %}Sửa tài khoản{% endif %}{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><a class="back-link" href="{% if target %}{% url 'accounts:admin_user_detail' target.user_id %}{% else %}{% url 'accounts:admin_user_list' %}{% endif %}">← Quay lại</a><h1>{% if mode == 'create' %}Tạo tài khoản mới{% else %}Cập nhật tài khoản{% endif %}</h1><p>{% if mode == 'create' %}Tạo User hoặc Admin với quyền truy cập tương ứng.{% else %}Thay đổi thông tin, vai trò và trạng thái truy cập.{% endif %}</p></div></div>
+<section class="admin-card admin-form-card"><form method="post" class="admin-form">{% csrf_token %}{% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}{{ form.as_p }}<div class="admin-actions"><button class="btn primary" type="submit">{% if mode == 'create' %}Tạo tài khoản{% else %}Lưu thay đổi{% endif %}</button><a class="btn" href="{% if target %}{% url 'accounts:admin_user_detail' target.user_id %}{% else %}{% url 'accounts:admin_user_list' %}{% endif %}">Hủy</a></div></form></section>
+{% endblock %}

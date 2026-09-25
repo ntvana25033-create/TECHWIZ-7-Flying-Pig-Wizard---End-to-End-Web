@@ -1,0 +1,23 @@
+{% extends 'accounts/layouts/auth_base.html' %}
+{% block title %}Đăng nhập | Campus Coin{% endblock %}
+{% block content %}
+<div class="auth-card-head">
+    <span class="auth-kicker">CHÀO MỪNG TRỞ LẠI</span>
+    <h2>Đăng nhập Campus Coin</h2>
+    <p>Tiếp tục theo dõi tài chính và mục tiêu của bạn.</p>
+</div>
+<form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    {% if form.non_field_errors %}<div class="alert error">{{ form.non_field_errors }}</div>{% endif %}
+    {% include 'accounts/partials/field.html' with field=form.email %}
+    <div class="password-field">
+        {% include 'accounts/partials/field.html' with field=form.password %}
+        <button class="password-toggle" type="button" data-toggle-password="id_password">Hiện</button>
+    </div>
+    <div class="form-actions"><a href="{% url 'accounts:forgot_password' %}">Quên mật khẩu?</a></div>
+    <button type="submit" class="primary-btn"><span>Đăng nhập</span><span>→</span></button>
+</form>
+<div class="auth-footer"><span>Chưa có tài khoản?</span><a href="{% url 'accounts:register' %}">Đăng ký ngay</a><span>·</span><a href="{% url 'accounts:admin_login' %}">Cổng Admin</a></div>
+{% endblock %}
+{% block extra_js %}{% load static %}<script src="{% static 'accounts/js/register.js' %}"></script>{% endblock %}
