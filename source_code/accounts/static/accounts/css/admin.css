@@ -4,3 +4,12 @@ body[data-portal="admin"]{background:var(--admin-bg);color:var(--admin-ink)}
 .admin-auth-page .admin-auth-brand{background:linear-gradient(145deg,#111a33 0%,#1f3c77 56%,#2f5ba7 100%)}
 @media(max-width:1050px){.admin-stat-grid{grid-template-columns:repeat(3,1fr)}.admin-filters{grid-template-columns:1fr 1fr}.admin-two-col{grid-template-columns:1fr}}
 @media(max-width:760px){.admin-shell{grid-template-columns:1fr}.admin-sidebar{height:auto;position:relative}.admin-nav{grid-template-columns:repeat(2,1fr)}.admin-side-bottom{grid-template-columns:repeat(2,1fr)}.admin-topbar{padding:0 20px}.admin-account{display:none}.admin-stat-grid{grid-template-columns:1fr 1fr}.admin-page-head{align-items:stretch;flex-direction:column}.admin-filters{grid-template-columns:1fr}.admin-session-row{align-items:stretch;flex-direction:column}}
+
+.admin-account-link{display:flex;align-items:center;justify-content:flex-end;gap:11px;color:inherit;text-decoration:none}
+.admin-account-link:hover{text-decoration:none}
+.admin-account-copy{display:block;text-align:right}
+.admin-avatar-panel{margin:16px 0 22px;padding-bottom:22px}
+.admin-form .file-picker{width:auto;color:#fff}
+.admin-form .avatar-upload-copy input[type="file"]{position:absolute;width:1px!important;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;clip-path:inset(50%)}
+.admin-form .remove-avatar-row{display:flex;align-items:center;gap:9px;margin-top:12px}
+.admin-form .remove-avatar-row input{width:auto}

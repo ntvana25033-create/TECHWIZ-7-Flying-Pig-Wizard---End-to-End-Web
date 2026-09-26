@@ -41,7 +41,7 @@ class AccountTests(TestCase):
             {"email": self.admin.email, "password": "StrongPass123!"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Cổng Admin")
+        self.assertContains(response, "Admin Portal")
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_admin_login_rejects_student_account(self):
@@ -50,7 +50,7 @@ class AccountTests(TestCase):
             {"email": self.student.email, "password": "StrongPass123!"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "không có quyền quản trị")
+        self.assertContains(response, "does not have administrator privileges")
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_student_cannot_open_admin_dashboard(self):
@@ -67,7 +67,7 @@ class AccountTests(TestCase):
         self.client.force_login(self.admin, backend="apps.accounts.backends.EmailAuthenticationBackend")
         response = self.client.get(reverse("accounts:admin_dashboard"))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Tổng quan quản trị")
+        self.assertContains(response, "Administration Overview")
 
     def test_student_forgot_password_sends_email(self):
         response = self.client.post(
@@ -77,7 +77,7 @@ class AccountTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(mail.outbox), 1)
-        self.assertIn("Đặt lại mật khẩu", mail.outbox[0].subject)
+        self.assertIn("Reset Password", mail.outbox[0].subject)
 
     def test_student_forgot_password_does_not_send_for_admin(self):
         self.client.post(reverse("accounts:forgot_password"), {"email": self.admin.email})

@@ -45,7 +45,7 @@ def register_view(request):
         user = form.save()
         login(request, user, backend="accounts.backends.EmailAuthenticationBackend")
         record_login_session(request, user)
-        messages.success(request, "Tạo tài khoản thành công. Chào mừng bạn đến Campus Coin!")
+        messages.success(request, "Account created successfully. Welcome to Campus Coin!")
         return redirect("transactions:transaction-list")
 
     return render(request, "accounts/auth/register.html", {"form": form})
@@ -61,11 +61,11 @@ def login_view(request):
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         if user.role.role_name != Role.Name.STUDENT:
-            form.add_error(None, "Tài khoản quản trị phải đăng nhập tại Cổng Admin")
+            form.add_error(None, "Administrator accounts must sign in through the Admin Portal")
         else:
             login(request, user)
             record_login_session(request, user)
-            messages.success(request, "Đăng nhập thành công")
+            messages.success(request, "Login successful")
             return redirect(_safe_next_url(request) or "transactions:transaction-list")
 
     return render(
@@ -83,7 +83,7 @@ def logout_view(request):
     if request.user.is_authenticated:
         revoke_current_session(request)
         logout(request)
-    messages.success(request, "Đã đăng xuất")
+    messages.success(request, "Signed out successfully")
     if admin_portal:
         return redirect("accounts:admin_login")
     return redirect("accounts:login")
@@ -107,7 +107,7 @@ def forgot_password_view(request):
 
         messages.success(
             request,
-            "Nếu email sinh viên tồn tại trong hệ thống, liên kết đặt lại mật khẩu đã được gửi",
+            "If the student email exists in the system, a password reset link has been sent",
         )
         return redirect("accounts:forgot_password")
 
@@ -140,7 +140,7 @@ def reset_password_view(request, token):
         reset_token.used_at = timezone.now()
         reset_token.save(update_fields=["used_at"])
         revoke_all_sessions(user)
-        messages.success(request, "Đặt lại mật khẩu thành công. Hãy đăng nhập lại")
+        messages.success(request, "Password reset successfully. Please sign in again")
         if admin_portal:
             return redirect("accounts:admin_login")
         return redirect("accounts:login")

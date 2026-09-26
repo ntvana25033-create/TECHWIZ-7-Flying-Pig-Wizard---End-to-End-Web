@@ -1,34 +1,38 @@
 {% load static %}
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Campus Coin{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'css/app.css' %}">
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260925">
     {% block extra_head %}{% endblock %}
 </head>
 <body data-authenticated="1" data-portal="user">
 <div class="app-shell">
     <aside class="sidebar user-sidebar">
-        <a class="brand" href="{% url 'transactions:transaction:list' %}">Campus Coin <small>User Portal</small></a>
+        <a class="brand" href="{% url 'transactions:transaction-list' %}">Campus Coin <small>User Portal</small></a>
         <nav class="side-nav">
-            <a href="{% url 'transactions:transaction:list' %}">Giao dịch</a>
-            <a href="{% url 'transactions:transaction:category_list' %}">Hạng mục</a>
-            <a href="{% url 'transactions:transaction:import' %}">Nhập CSV</a>
-            <a href="{% url 'reports:monthly' %}">Báo cáo</a>
-            <a class="notification-link" href="{% url 'notifications:list' %}">Thông báo <span id="notification-badge" class="nav-badge" {% if not global_unread_notifications %}hidden{% endif %}>{{ global_unread_notifications }}</span></a>
+            <a href="{% url 'transactions:transaction-list' %}">Transactions</a>
+            <a href="{% url 'transactions:category-list' %}">Categories</a>
         </nav>
         <div class="side-bottom">
-            <a href="{% url 'accounts:profile' %}">Hồ sơ cá nhân</a>
-            <a href="{% url 'accounts:sessions' %}">Phiên đăng nhập</a>
-            <a href="{% url 'accounts:logout' %}">Đăng xuất</a>
+            <a href="{% url 'accounts:profile' %}">Personal Profile</a>
+            <a href="{% url 'accounts:sessions' %}">Login Sessions</a>
+            <a href="{% url 'accounts:logout' %}">Sign out</a>
         </div>
     </aside>
     <section class="main-shell">
         <header class="workspace-top">
             <div class="portal-chip">USER</div>
-            <div><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></div>
+            <a class="header-account" href="{% url 'accounts:profile' %}" aria-label="Open profile">
+                {% if user.profile.avatar_path %}
+                    <img class="header-avatar" src="{{ user.profile.avatar_path.url }}" alt="{{ user.get_full_name }} profile picture">
+                {% else %}
+                    <span class="header-avatar fallback">{{ user.get_full_name|first|upper }}</span>
+                {% endif %}
+                <span class="header-account-copy"><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></span>
+            </a>
         </header>
         <main class="container">
             {% if messages %}{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
@@ -37,7 +41,6 @@
     </section>
 </div>
 <div id="toast-stack" class="toast-stack"></div>
-<script src="{% static 'notifications/js/realtime.js' %}"></script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

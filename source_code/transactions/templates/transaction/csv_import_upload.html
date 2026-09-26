@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import CSV | Campus Coin</title>
+    <style>
+        *{box-sizing:border-box} body{margin:0;background:#f3f8f4;color:#213329;font-family:'Segoe UI',Arial,sans-serif;padding:36px 18px}
+        .wrap{max-width:900px;margin:auto}.card{background:#fff;border-radius:16px;padding:28px;box-shadow:0 10px 35px rgba(26,79,47,.09);border-top:6px solid #2e7d32}
+        h1{margin:0 0 8px;color:#1b5e20}.muted{color:#66776d;line-height:1.55}.steps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:24px 0}
+        .step{background:#edf7ef;border:1px solid #d4ead9;border-radius:12px;padding:14px;font-size:13px}.step strong{display:block;color:#1f6d38;margin-bottom:5px}
+        .upload{border:2px dashed #9ccbA8;border-radius:14px;padding:24px;margin:24px 0;background:#fbfefb}.upload label{display:block;font-weight:700;margin-bottom:10px}.upload input{width:100%;padding:10px;background:#fff;border:1px solid #bed4c4;border-radius:8px}
+        .help{font-size:13px;color:#6b7a71;margin-top:8px}.errorlist{color:#b3261e}.actions{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.btn{display:inline-block;border:0;border-radius:9px;padding:11px 18px;font-weight:700;text-decoration:none;cursor:pointer}.primary{background:#2e7d32;color:#fff}.secondary{background:#e8f5e9;color:#1b5e20}.back{color:#50665a;text-decoration:none}
+        code{background:#edf2ee;padding:2px 6px;border-radius:5px}@media(max-width:700px){.steps{grid-template-columns:1fr 1fr}}@media(max-width:450px){.steps{grid-template-columns:1fr}}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    {% if messages %}{% for message in messages %}<div class="card" style="padding:12px 16px;margin-bottom:12px">{{ message }}</div>{% endfor %}{% endif %}
+    <div class="card">
+        <h1>Import giao dịch từ CSV</h1>
+        <p class="muted">Dữ liệu chưa được ghi vào bảng Transaction ngay. Sau khi upload, AI phân loại hàng loạt và đưa bạn tới bảng tạm để kiểm tra, sửa rồi xác nhận lần cuối.</p>
+
+        <div class="steps">
+            <div class="step"><strong>1. Upload</strong>Chọn file CSV của sinh viên.</div>
+            <div class="step"><strong>2. AI classify</strong>AI gợi ý Category theo Description.</div>
+            <div class="step"><strong>3. Review</strong>Sửa trực tiếp từng dòng trong bảng tạm.</div>
+            <div class="step"><strong>4. Confirm</strong>Ghi SQL + dùng lựa chọn cuối làm dữ liệu học.</div>
+        </div>
+
+        <p class="muted"><strong>Cột CSV:</strong> <code>type</code>, <code>category</code>, <code>amount</code>, <code>description</code>, <code>date</code>. Cột <code>category</code> có thể để trống để AI tự phân loại. Type nhận <code>income/expense</code> hoặc <code>thu/chi</code>. Date nên dùng <code>YYYY-MM-DD</code>.</p>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="upload">
+                <label for="{{ form.csv_file.id_for_label }}">{{ form.csv_file.label }}</label>
+                {{ form.csv_file }}
+                {% if form.csv_file.help_text %}<div class="help">{{ form.csv_file.help_text }}</div>{% endif %}
+                {{ form.csv_file.errors }}
+            </div>
+            <div class="actions">
+                <button class="btn primary" type="submit">Upload và phân loại bằng AI</button>
+                <a class="btn secondary" href="{% url 'transactions:csv-import-template' %}">Tải CSV mẫu</a>
+                <a class="back" href="{% url 'transactions:transaction-list' %}">← Quay lại giao dịch</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>

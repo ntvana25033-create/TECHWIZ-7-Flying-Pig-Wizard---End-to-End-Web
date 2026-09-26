@@ -1,0 +1,61 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Notifications | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">NOTIFICATIONS</p>
+        <h1>Notification Center</h1>
+        <p class="muted">Weekly and monthly summaries, savings-goal warnings, and low-balance alerts.</p>
+    </div>
+    {% if notification_unread_count %}
+    <form method="post" action="{% url 'notifications:mark-all-read' %}">
+        {% csrf_token %}
+        <button class="btn" type="submit">Mark all as read</button>
+    </form>
+    {% endif %}
+</div>
+
+<div class="stack notification-list">
+{% for item in notifications %}
+    <article class="notification-card {% if not item.is_read %}unread{% endif %} severity-{{ item.severity }}">
+        <div class="notification-copy">
+            <div class="inline-actions notification-meta">
+                <span class="pill">{{ item.get_kind_display }}</span>
+                <small>{{ item.created_at|date:"M d, Y H:i" }}</small>
+                {% if item.emailed_at %}<small>Email sent</small>{% elif item.email_error %}<small class="negative">Email failed</small>{% endif %}
+            </div>
+            <h3>{{ item.title }}</h3>
+            <p>{{ item.message }}</p>
+            <div class="notification-numbers">
+                <span><small>Income</small><strong>{{ item.income_total|floatformat:0 }} {{ user.profile.currency_code }}</strong></span>
+                <span><small>Expenses</small><strong>{{ item.expense_total|floatformat:0 }} {{ user.profile.currency_code }}</strong></span>
+                <span><small>Remaining</small><strong>{{ item.balance|floatformat:0 }} {{ user.profile.currency_code }}</strong></span>
+                {% if item.savings_goal != None %}<span><small>Savings goal</small><strong>{{ item.savings_goal|floatformat:0 }} {{ user.profile.currency_code }}</strong></span>{% endif %}
+            </div>
+        </div>
+        <div class="notification-actions">
+            <a class="btn primary" href="{{ item.action_path }}">Open report</a>
+            {% if not item.is_read %}
+            <form method="post" action="{% url 'notifications:mark-read' item.pk %}">
+                {% csrf_token %}<input type="hidden" name="next" value="notifications:list">
+                <button class="btn" type="submit">Mark as read</button>
+            </form>
+            {% endif %}
+        </div>
+    </article>
+{% empty %}
+    <section class="card empty-state-panel">
+        <h2>No notifications yet</h2>
+        <p class="muted">Campus Coin will store your scheduled summaries and spending alerts here.</p>
+    </section>
+{% endfor %}
+</div>
+
+{% if is_paginated %}
+<nav class="pagination">
+    {% if page_obj.has_previous %}<a class="btn" href="?page={{ page_obj.previous_page_number }}">Previous</a>{% endif %}
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    {% if page_obj.has_next %}<a class="btn" href="?page={{ page_obj.next_page_number }}">Next</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

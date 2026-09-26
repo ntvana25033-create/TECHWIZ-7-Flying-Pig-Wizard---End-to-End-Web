@@ -1,0 +1,30 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Confirm CSV Import | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">FINAL CONFIRMATION</p>
+        <h1>Confirm CSV import</h1>
+        <p class="muted">After this step, {{ row_count }} staged row(s) will become real transactions. The final Description + Category choices will also be used as AI feedback.</p>
+    </div>
+</div>
+<div class="stats-grid import-summary-grid">
+    <div class="metric"><span>Transactions</span><strong>{{ row_count }}</strong></div>
+    <div class="metric"><span>Total income</span><strong class="positive">{{ income_total|floatformat:2 }} {{ user.profile.currency_code }}</strong></div>
+    <div class="metric"><span>Total expenses</span><strong class="negative">{{ expense_total|floatformat:2 }} {{ user.profile.currency_code }}</strong></div>
+</div>
+<section class="card">
+    <div class="warning-panel">This is the final write step. If any row still needs changes, return to the staging table before confirming.</div>
+    <h2>Category distribution</h2>
+    <div class="table-wrap">
+        <table><thead><tr><th>Category</th><th>Rows</th></tr></thead><tbody>
+        {% for name,count in category_counts %}<tr><td>{{ name }}</td><td>{{ count }}</td></tr>{% empty %}<tr><td colspan="2">No data</td></tr>{% endfor %}
+        </tbody></table>
+    </div>
+    <div class="inline-actions confirm-actions">
+        <form method="post">{% csrf_token %}<button class="btn primary" type="submit" onclick="return confirm('Create all staged transactions now?');">Confirm and import</button></form>
+        <a class="btn" href="{% url 'transactions:csv-import-preview' batch.pk %}">Back to staging table</a>
+    </div>
+</section>
+{% endblock %}
+{% block extra_head %}<style>.warning-panel{background:#fff5d6;border:1px solid #f0d67c;border-radius:10px;padding:13px;margin-bottom:20px;color:#6e5300}.confirm-actions{margin-top:18px;justify-content:flex-start}.import-summary-grid{grid-template-columns:repeat(3,1fr)}@media(max-width:700px){.import-summary-grid{grid-template-columns:1fr}}</style>{% endblock %}

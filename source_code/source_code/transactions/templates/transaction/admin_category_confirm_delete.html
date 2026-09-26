@@ -1,0 +1,6 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Delete Category | Campus Coin{% endblock %}
+{% block page_name %}Category Management{% endblock %}
+{% block content %}
+<section class="admin-card admin-form-card"><span class="admin-section-kicker">CONFIRMATION</span><h1>Delete this category?</h1><p>This will permanently delete <strong>{{ object.name }}</strong> ({{ object.get_type_display }}). Existing transactions using it will keep the transaction but their category may become empty because the relation uses SET_NULL.</p><div class="admin-actions"><form method="post">{% csrf_token %}<button class="btn danger" type="submit">Delete category</button></form><a class="btn" href="{% url 'transactions:admin-category-list' %}">Cancel</a></div></section>
+{% endblock %}

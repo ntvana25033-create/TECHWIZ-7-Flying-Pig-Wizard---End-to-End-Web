@@ -1,11 +1,11 @@
 {% extends 'accounts/layouts/auth_base.html' %}
 {% load static %}
-{% block title %}Đăng ký | Campus Coin{% endblock %}
+{% block title %}Register | Campus Coin{% endblock %}
 {% block content %}
 <div class="auth-card-head">
-    <span class="auth-kicker">BẮT ĐẦU MIỄN PHÍ</span>
-    <h2>Tạo tài khoản sinh viên</h2>
-    <p>Thiết lập hồ sơ cơ bản. Bạn có thể chỉnh sửa lại thông tin tài chính sau.</p>
+    <span class="auth-kicker">GET STARTED FOR FREE</span>
+    <h2>Create a student account</h2>
+    <p>Set up your basic profile. You can update your financial information later.</p>
 </div>
 
 <form method="post" class="auth-form" novalidate>
@@ -23,17 +23,17 @@
 
         <div class="password-field">
             {% include 'accounts/partials/field.html' with field=form.password1 %}
-            <button class="password-toggle" type="button" data-toggle-password="id_password1" aria-label="Hiện mật khẩu">Hiện</button>
+            <button class="password-toggle" type="button" data-toggle-password="id_password1" aria-label="Show password">Show</button>
         </div>
         <div class="password-field">
             {% include 'accounts/partials/field.html' with field=form.password2 %}
-            <button class="password-toggle" type="button" data-toggle-password="id_password2" aria-label="Hiện mật khẩu">Hiện</button>
+            <button class="password-toggle" type="button" data-toggle-password="id_password2" aria-label="Show password">Show</button>
         </div>
     </div>
 
     <div class="password-meter" aria-live="polite">
         <div class="meter-track"><span id="passwordStrengthBar"></span></div>
-        <small id="passwordStrengthText">Mật khẩu nên có ít nhất 8 ký tự.</small>
+        <small id="passwordStrengthText">Password should contain at least 8 characters.</small>
     </div>
 
     <label class="terms-row" for="{{ form.accept_terms.id_for_label }}">
@@ -43,13 +43,13 @@
     {% for error in form.accept_terms.errors %}<small class="field-error block">{{ error }}</small>{% endfor %}
 
     <button type="submit" class="primary-btn">
-        <span>Tạo tài khoản</span><span aria-hidden="true">→</span>
+        <span>Create account</span><span aria-hidden="true">→</span>
     </button>
 </form>
 
 <div class="auth-footer">
-    <span>Đã có tài khoản?</span>
-    <a href="{% url 'accounts:login' %}">Đăng nhập</a>
+    <span>Already have an account?</span>
+    <a href="{% url 'accounts:login' %}">Sign in</a>
 </div>
 {% endblock %}
-{% block extra_js %}<script src="{% static 'accounts/js/register.js' %}"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/register.js' %}?v=20260925"></script>{% endblock %}

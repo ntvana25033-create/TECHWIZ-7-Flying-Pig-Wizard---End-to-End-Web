@@ -1,0 +1,47 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Notification Management | Campus Coin{% endblock %}
+{% block page_name %}Notification Management{% endblock %}
+{% block content %}
+<div class="admin-page-head">
+    <div>
+        <span class="admin-section-kicker">NOTIFICATIONS</span>
+        <h1>System Notifications</h1>
+        <p>Review stored weekly/monthly summaries and threshold alerts across student accounts.</p>
+    </div>
+</div>
+<section class="admin-card">
+    <form class="admin-filters notification-admin-filters" method="get">
+        <select class="form-control" name="kind">
+            <option value="">All notification types</option>
+            {% for value,label in kinds %}<option value="{{ value }}" {% if selected_kind == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+        <select class="form-control" name="status">
+            <option value="">Read + unread</option>
+            <option value="unread" {% if selected_status == 'unread' %}selected{% endif %}>Unread</option>
+            <option value="read" {% if selected_status == 'read' %}selected{% endif %}>Read</option>
+        </select>
+        <button class="btn primary" type="submit">Filter</button>
+        <a class="btn" href="{% url 'notifications:admin-list' %}">Reset</a>
+    </form>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Student</th><th>Type</th><th>Title</th><th>Remaining</th><th>Email</th><th>Status</th><th>Created</th></tr></thead>
+            <tbody>
+            {% for item in notifications %}
+                <tr>
+                    <td>{{ item.user.email }}</td>
+                    <td>{{ item.get_kind_display }}</td>
+                    <td><strong>{{ item.title }}</strong><br><small class="muted">{{ item.message|truncatechars:90 }}</small></td>
+                    <td class="money">{{ item.balance|floatformat:0 }}</td>
+                    <td>{% if item.emailed_at %}<span class="status-chip status-active">Sent</span>{% elif item.email_error %}<span class="status-chip status-disabled">Failed</span>{% else %}<span class="status-chip">Pending</span>{% endif %}</td>
+                    <td>{% if item.is_read %}<span class="status-chip">Read</span>{% else %}<span class="status-chip status-pending">Unread</span>{% endif %}</td>
+                    <td>{{ item.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+            {% empty %}<tr><td colspan="7" class="empty">No notifications have been created yet.</td></tr>{% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% if is_paginated %}<nav class="pagination">{% if page_obj.has_previous %}<a class="btn" href="?page={{ page_obj.previous_page_number }}&kind={{ selected_kind }}&status={{ selected_status }}">Previous</a>{% endif %}<span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="btn" href="?page={{ page_obj.next_page_number }}&kind={{ selected_kind }}&status={{ selected_status }}">Next</a>{% endif %}</nav>{% endif %}
+{% endblock %}
+{% block extra_head %}<style>.notification-admin-filters{grid-template-columns:2fr 1fr auto auto}@media(max-width:900px){.notification-admin-filters{grid-template-columns:1fr}}</style>{% endblock %}

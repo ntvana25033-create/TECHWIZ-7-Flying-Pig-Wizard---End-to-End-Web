@@ -1,7 +1,71 @@
 {% extends 'accounts/layouts/admin_base.html' %}
-{% block title %}Hồ sơ Admin | Campus Coin{% endblock %}
-{% block page_name %}Hồ sơ Admin{% endblock %}
+{% load static %}
+{% block title %}Admin Profile | Campus Coin{% endblock %}
+{% block page_name %}Admin Profile{% endblock %}
 {% block content %}
-<div class="admin-page-head"><div><p class="admin-section-kicker">ACCOUNT SECURITY</p><h1>Hồ sơ quản trị</h1><p>Cập nhật thông tin đăng nhập và bảo mật tài khoản quản trị.</p></div></div>
-<div class="admin-two-col"><section class="admin-card"><h2>Thông tin cơ bản</h2><form method="post" class="admin-form">{% csrf_token %}{{ form.as_p }}<button class="btn primary" type="submit">Lưu thay đổi</button></form></section><section class="admin-card"><h2>Bảo mật</h2><div class="security-links"><a href="{% url 'accounts:admin_change_password' %}"><strong>Đổi mật khẩu</strong><span>Cập nhật mật khẩu và đăng xuất các phiên khác.</span></a><a href="{% url 'accounts:admin_sessions' %}"><strong>Phiên đăng nhập</strong><span>Xem và thu hồi phiên quản trị đang tồn tại.</span></a></div></section></div>
+<div class="admin-page-head">
+    <div>
+        <p class="admin-section-kicker">ACCOUNT SECURITY</p>
+        <h1>Administrator Profile</h1>
+        <p>Update administrator sign-in information, profile picture, and account security.</p>
+    </div>
+</div>
+
+<div class="admin-two-col">
+    <section class="admin-card">
+        <h2>Basic Information</h2>
+        <form method="post" enctype="multipart/form-data" class="admin-form" novalidate>
+            {% csrf_token %}
+
+            <div class="profile-avatar-panel admin-avatar-panel">
+                <div class="avatar-preview-wrap">
+                    {% if user.profile.avatar_path %}
+                        <img id="avatarPreview" class="profile-avatar-image" src="{{ user.profile.avatar_path.url }}" alt="{{ user.get_full_name }} profile picture">
+                        <div id="avatarFallback" class="profile-avatar-fallback" hidden>{{ user.get_full_name|first|upper }}</div>
+                    {% else %}
+                        <img id="avatarPreview" class="profile-avatar-image" src="" alt="Profile picture preview" hidden>
+                        <div id="avatarFallback" class="profile-avatar-fallback">{{ user.get_full_name|first|upper }}</div>
+                    {% endif %}
+                </div>
+                <div class="avatar-upload-copy">
+                    <h3>Profile picture</h3>
+                    <p class="muted">Upload an image for the administrator account.</p>
+                    <label class="file-picker" for="{{ form.avatar_path.id_for_label }}">Choose image</label>
+                    {{ form.avatar_path }}
+                    {% if form.avatar_path.help_text %}<small class="profile-help">{{ form.avatar_path.help_text }}</small>{% endif %}
+                    {% for error in form.avatar_path.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                    {% if user.profile.avatar_path %}
+                        <label class="remove-avatar-row" for="{{ form.remove_avatar.id_for_label }}">
+                            {{ form.remove_avatar }}
+                            <span>{{ form.remove_avatar.label }}</span>
+                        </label>
+                    {% endif %}
+                    <span id="selectedAvatarName" class="selected-file-name">{% if user.profile.avatar_path %}Current image: {{ user.profile.avatar_path.name|cut:'avatars/' }}{% else %}No image selected{% endif %}</span>
+                </div>
+            </div>
+
+            <div class="profile-field">
+                <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                {{ form.full_name }}
+                {% for error in form.full_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            {% if form.non_field_errors %}<div class="panel-error">{{ form.non_field_errors }}</div>{% endif %}
+            <button class="btn primary" type="submit">Save changes</button>
+        </form>
+    </section>
+
+    <section class="admin-card">
+        <h2>Security</h2>
+        <div class="security-links">
+            <a href="{% url 'accounts:admin_change_password' %}"><strong>Change password</strong><span>Update the password and sign out other sessions.</span></a>
+            <a href="{% url 'accounts:admin_sessions' %}"><strong>Login Sessions</strong><span>View and revoke active administrator sessions.</span></a>
+        </div>
+    </section>
+</div>
 {% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/profile.js' %}?v=20260925"></script>{% endblock %}

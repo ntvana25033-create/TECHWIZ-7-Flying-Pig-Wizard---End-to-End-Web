@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Review CSV | Campus Coin</title>
+    <style>
+        *{box-sizing:border-box}body{margin:0;background:#f4f8f5;color:#203128;font-family:'Segoe UI',Arial,sans-serif;padding:28px 16px}.wrap{max-width:1500px;margin:auto}
+        .head,.panel{background:#fff;border:1px solid #dce9df;border-radius:14px;box-shadow:0 8px 26px rgba(34,78,49,.06)}.head{padding:22px 24px;margin-bottom:16px;border-top:5px solid #2e7d32}.head h1{margin:0 0 6px;color:#1b5e20}.muted{color:#68786e}.summary{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.badge{padding:7px 10px;border-radius:999px;background:#e8f5e9;color:#1b5e20;font-size:12px;font-weight:800}.badge.warn{background:#fff3cd;color:#805b00}
+        .panel{overflow:hidden}.table-scroll{overflow:auto;max-height:68vh}table{width:100%;border-collapse:collapse;min-width:1280px}th{position:sticky;top:0;background:#2e7d32;color:#fff;padding:11px 9px;text-align:left;font-size:12px;z-index:2}td{padding:9px;border-bottom:1px solid #e4ece6;vertical-align:top}tr.has-error{background:#fff5f4}tr:nth-child(even):not(.has-error){background:#fbfdfb}
+        input,select{width:100%;min-width:110px;padding:8px 9px;border:1px solid #bfd2c4;border-radius:7px;background:#fff;font:inherit}input.desc{min-width:250px}.type{min-width:105px}.category{min-width:170px}.ai-cell{min-width:180px;font-size:12px}.ai-name{font-weight:800;color:#24733e}.ai-none{color:#8a958e}.errors{margin:6px 0 0;padding-left:17px;color:#b3261e;font-size:12px}.note{margin-top:5px;color:#8a6300;font-size:11px}.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:18px 20px;background:#fff}.action-group{display:flex;gap:10px;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:11px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-block}.primary{background:#2e7d32;color:#fff}.secondary{background:#e9f4eb;color:#1b5e20}.danger{background:#fdebea;color:#a22722}.back{color:#53685a;text-decoration:none;align-self:center}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    {% if messages %}{% for message in messages %}<div class="head" style="padding:12px 16px">{{ message }}</div>{% endfor %}{% endif %}
+    <section class="head">
+        <h1>Bảng tạm: {{ batch.original_filename }}</h1>
+        <div class="muted">AI đã chạy trên toàn bộ file. Category ở cột cuối là lựa chọn sẽ được dùng khi bạn xác nhận; bạn có thể sửa trực tiếp từng dòng.</div>
+        <div class="summary"><span class="badge">{{ rows|length }} dòng</span>{% if invalid_count %}<span class="badge warn">{{ invalid_count }} dòng cần sửa</span>{% else %}<span class="badge">Tất cả dữ liệu hợp lệ</span>{% endif %}</div>
+    </section>
+
+    <form method="post" id="previewForm" data-ai-url="{% url 'transactions:ajax_ai_predict' %}">
+        {% csrf_token %}
+        <section class="panel">
+            <div class="table-scroll">
+                <table>
+                    <thead><tr><th># CSV</th><th>Type</th><th>Amount</th><th>Description</th><th>Date</th><th>AI suggestion</th><th>Category cuối</th><th>Kiểm tra</th></tr></thead>
+                    <tbody>
+                    {% for row in rows %}
+                        <tr data-row="{{ row.pk }}" class="{% if row.validation_errors %}has-error{% endif %}">
+                            <td>{{ row.row_number }}</td>
+                            <td>
+                                <select class="type" name="row-{{ row.pk }}-type">
+                                    <option value="">-- Type --</option>
+                                    <option value="income" {% if row.type == 'income' %}selected{% endif %}>Income</option>
+                                    <option value="expense" {% if row.type == 'expense' %}selected{% endif %}>Expense</option>
+                                </select>
+                            </td>
+                            <td><input name="row-{{ row.pk }}-amount" value="{% if row.amount != None %}{{ row.amount }}{% else %}{{ row.source_row.amount|default:'' }}{% endif %}" inputmode="decimal"></td>
+                            <td><input class="desc" name="row-{{ row.pk }}-description" value="{{ row.description }}"></td>
+                            <td><input type="date" name="row-{{ row.pk }}-date" value="{% if row.date %}{{ row.date|date:'Y-m-d' }}{% endif %}"></td>
+                            <td class="ai-cell">
+                                <div class="ai-output">
+                                    {% if row.ai_suggested_category %}
+                                        <span class="ai-name">{{ row.ai_suggested_category.name }}</span>
+                                        {% if row.ai_prediction_confidence != None %}{% widthratio row.ai_prediction_confidence 1 100 as confidence %}<div>{{ confidence }}% similarity</div>{% endif %}
+                                    {% else %}<span class="ai-none">Chưa có gợi ý</span>{% endif %}
+                                </div>
+                                {% if row.review_note %}<div class="note">{{ row.review_note }}</div>{% endif %}
+                            </td>
+                            <td>
+                                <select class="category" name="row-{{ row.pk }}-category" data-selected="{{ row.category_id|default:'' }}">
+                                    <option value="">-- Category --</option>
+                                    {% for category in categories %}
+                                        <option value="{{ category.pk }}" data-type="{{ category.type }}" {% if row.category_id == category.pk %}selected{% endif %}>{{ category.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>{% if row.validation_errors %}<ul class="errors">{% for error in row.validation_errors %}<li>{{ error }}</li>{% endfor %}</ul>{% else %}<span class="ai-name">OK</span>{% endif %}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="actions">
+                <div class="action-group">
+                    <button class="btn secondary" type="submit" name="action" value="save">Lưu chỉnh sửa</button>
+                    <button class="btn primary" type="submit" name="action" value="continue">Lưu và tiếp tục xác nhận</button>
+                </div>
+                <a class="back" href="{% url 'transactions:transaction-list' %}">← Transaction list</a>
+            </div>
+        </section>
+    </form>
+
+    <form method="post" action="{% url 'transactions:csv-import-cancel' batch.pk %}" style="margin-top:12px" onsubmit="return confirm('Hủy lô CSV này? Chưa có Transaction thật nào được tạo.');">
+        {% csrf_token %}<button class="btn danger" type="submit">Hủy toàn bộ lô import</button>
+    </form>
+</div>
+{{ category_data|json_script:"category-data" }}
+<script>
+(function(){
+    const form = document.getElementById('previewForm');
+    const aiUrl = form.dataset.aiUrl;
+    const categoryData = JSON.parse(document.getElementById('category-data').textContent);
+
+    function filterCategory(row){
+        const type = row.querySelector('.type').value;
+        const select = row.querySelector('.category');
+        Array.from(select.options).forEach(opt => {
+            if(!opt.value) return;
+            opt.hidden = opt.dataset.type !== type;
+            opt.disabled = opt.dataset.type !== type;
+        });
+        const selected = select.selectedOptions[0];
+        if(selected && selected.value && selected.dataset.type !== type){ select.value=''; }
+    }
+
+    async function refreshAI(row){
+        const type = row.querySelector('.type').value;
+        const desc = row.querySelector('.desc').value.trim();
+        const out = row.querySelector('.ai-output');
+        if(!type || !desc){ out.innerHTML='<span class="ai-none">Chưa có gợi ý</span>'; return; }
+        out.innerHTML='<span class="ai-none">AI đang dự đoán...</span>';
+        try{
+            const params = new URLSearchParams({type:type, description:desc});
+            const response = await fetch(`${aiUrl}?${params.toString()}`);
+            const data = await response.json();
+            if(!data.prediction){ out.innerHTML='<span class="ai-none">Chưa có gợi ý</span>'; return; }
+            const p=data.prediction, percent=Math.round(Number(p.confidence||0)*100);
+            out.innerHTML=`<span class="ai-name">${p.category_name}</span><div>${percent}% similarity</div>`;
+            const select=row.querySelector('.category');
+            const current=select.selectedOptions[0];
+            if(!current || !current.value || current.dataset.type !== type){ select.value=String(p.category_id); }
+        }catch(e){ out.innerHTML='<span class="ai-none">Không lấy được gợi ý</span>'; }
+    }
+
+    document.querySelectorAll('tr[data-row]').forEach(row => {
+        filterCategory(row);
+        row.querySelector('.type').addEventListener('change', () => { filterCategory(row); refreshAI(row); });
+        row.querySelector('.desc').addEventListener('blur', () => refreshAI(row));
+    });
+})();
+</script>
+</body>
+</html>

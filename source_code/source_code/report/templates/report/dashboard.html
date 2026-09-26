@@ -1,0 +1,252 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Financial Report | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">REPORTS</p>
+        <h1>Income and Expense Report</h1>
+        <p class="muted">{{ start|date:"M d, Y" }} → {{ end|date:"M d, Y" }} · {{ transaction_count }} transaction(s)</p>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <form id="email-report-form" method="post" style="margin: 0;">
+            {% csrf_token %}
+            <!-- Thẻ ẩn lưu giá trị hiện tại trên form để gửi đi qua POST -->
+            <input type="hidden" name="period" id="email-period" value="{{ period }}">
+            <input type="hidden" name="date" id="email-date" value="{{ reference }}">
+
+            <button type="button" class="btn primary" onclick="sendEmailWithCurrentFilters()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 4px;"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                Email Report
+            </button>
+        </form>
+        <a class="btn" href="{% url 'transactions:transaction-list' %}">Back to transactions</a>
+    </div>
+</div>
+
+<div class="card">
+    <form class="report-filter" method="get">
+        <div>
+            <label for="period">Period</label>
+            <select name="period" id="period" class="form-control">
+                {% for key,label in periods.items %}<option value="{{ key }}" {% if key == period %}selected{% endif %}>{{ label }}</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="date">Reference date</label>
+            <input class="form-control" type="date" name="date" id="date" value="{{ reference }}">
+        </div>
+        <button class="btn primary" type="submit">View report</button>
+    </form>
+</div>
+
+<div class="stats-grid">
+    <div class="metric"><span>Total income</span><strong class="positive">{{ total_income|floatformat:0 }} {{ user.profile.currency_code }}</strong></div>
+    <div class="metric"><span>Total expenses</span><strong class="negative">{{ total_expense|floatformat:0 }} {{ user.profile.currency_code }}</strong></div>
+    <div class="metric"><span>Balance</span><strong class="{% if balance >= 0 %}positive{% else %}negative{% endif %}">{{ balance|floatformat:0 }} {{ user.profile.currency_code }}</strong></div>
+    <div class="metric"><span>Transactions</span><strong>{{ transaction_count }}</strong></div>
+</div>
+
+<div class="card chart-card wide">
+    <div class="page-head"><div><h2>Income vs. expense trend</h2><p class="muted">Compare income and expenses across the selected period.</p></div></div>
+    <canvas id="incomeExpenseChart"></canvas>
+</div>
+
+<!-- Biểu đồ phân bổ tích hợp chuyển đổi Thu/Chi -->
+<div class="card chart-card wide">
+    <div class="page-head" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+            <h2>Category Distribution</h2>
+            <p class="muted">Click on a chart segment to show/hide specific transactions.</p>
+        </div>
+        <div style="display: flex; gap: 10px;">
+            <button type="button" class="btn primary" id="btn-expense" onclick="renderPieChart('expense')">Expenses</button>
+            <button type="button" class="btn" id="btn-income" onclick="renderPieChart('income')">Income</button>
+        </div>
+    </div>
+    <div style="position: relative; height: 350px;">
+        <canvas id="distributionPieChart"></canvas>
+    </div>
+</div>
+
+<!-- Bảng chi tiết giao dịch (Ẩn mặc định) -->
+<div id="transaction-details-container" class="card wide" style="display: none; margin-bottom: 20px;">
+    <h2 id="transaction-details-title" style="margin-bottom: 15px;">Transaction Details</h2>
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="border-bottom: 2px solid #eaeaea;">
+                <th style="padding: 10px 5px;">Date</th>
+                <th style="padding: 10px 5px;">Category</th>
+                <th style="padding: 10px 5px;">Description</th>
+                <th style="padding: 10px 5px; text-align: right;">Amount</th>
+            </tr>
+        </thead>
+        <tbody id="transaction-details-body">
+            <!-- Dữ liệu được render từ JS -->
+        </tbody>
+    </table>
+</div>
+
+<div class="report-grid">
+    <div class="card">
+        <h2>Income by category</h2>
+        {% for row in income_categories %}<div class="category-item"><span>{{ row.category__name|default:"Uncategorized" }}</span><strong class="positive">{{ row.total|floatformat:0 }} {{ user.profile.currency_code }}</strong></div>{% empty %}<p class="empty">No income in this period.</p>{% endfor %}
+    </div>
+    <div class="card">
+        <h2>Expenses by category</h2>
+        {% for row in expense_categories %}<div class="category-item"><span>{{ row.category__name|default:"Uncategorized" }}</span><strong class="negative">{{ row.total|floatformat:0 }} {{ user.profile.currency_code }}</strong></div>{% empty %}<p class="empty">No expenses in this period.</p>{% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>.report-filter{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end}.report-filter label{display:block;font-weight:700;margin-bottom:6px;font-size:13px}@media(max-width:700px){.report-filter{grid-template-columns:1fr}}</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+{{ chart_data|json_script:"report-chart-data" }}
+{{ income_categories_json|json_script:"income-categories-data" }}
+{{ expense_categories_json|json_script:"expense-categories-data" }}
+{{ transactions_json|json_script:"transactions-data" }}
+
+<script>
+    // Hàm cập nhật filter trước khi submit POST email
+    function sendEmailWithCurrentFilters() {
+        document.getElementById('email-period').value = document.getElementById('period').value;
+        document.getElementById('email-date').value = document.getElementById('date').value;
+        document.getElementById('email-report-form').submit();
+    }
+
+    const currencyCode = " {{ user.profile.currency_code }}";
+    const formatter = new Intl.NumberFormat("en-US");
+
+    // 1. Line Chart
+    const rows = JSON.parse(document.getElementById("report-chart-data").textContent);
+    new Chart(document.getElementById("incomeExpenseChart"), {
+        type: "line",
+        data: {labels: rows.map(r => r.label), datasets: [
+            {label: "Income", data: rows.map(r => r.income), borderColor: "#16834f", backgroundColor: "rgba(22,131,79,.08)", tension: .28, fill: false},
+            {label: "Expenses", data: rows.map(r => r.expense), borderColor: "#c43d3d", backgroundColor: "rgba(196,61,61,.08)", tension: .28, fill: false}
+        ]},
+        options: {
+            responsive:true, maintainAspectRatio:false, interaction:{mode:"index", intersect:false},
+            scales:{y:{beginAtZero:true, ticks:{callback:value => formatter.format(value) + currencyCode}}}
+        }
+    });
+
+    // 2. Pie Chart (Động theo nút chuyển đổi)
+    const incomes = JSON.parse(document.getElementById("income-categories-data").textContent);
+    const expenses = JSON.parse(document.getElementById("expense-categories-data").textContent);
+    const transactions = JSON.parse(document.getElementById("transactions-data").textContent);
+
+    let pieChartInstance = null;
+    let currentCategory = null;
+    let currentViewType = 'expense';
+
+    const expenseColors = ["#c43d3d", "#d46b3f", "#e59b3f", "#f2c744", "#8b572a", "#795548", "#607d8b", "#9c27b0", "#e91e63"];
+    const incomeColors = ["#16834f", "#2e7d32", "#4caf50", "#8bc34a", "#cddc39", "#009688", "#00bcd4", "#03a9f4", "#3f51b5"];
+
+    function renderPieChart(type) {
+        currentViewType = type;
+        const dataList = type === 'expense' ? expenses : incomes;
+        const totalAmount = dataList.reduce((sum, item) => sum + item.total, 0);
+
+        const pieLabels = dataList.map(item => item.name);
+        const pieData = dataList.map(item => item.total);
+
+        const palette = type === 'expense' ? expenseColors : incomeColors;
+        const bgColors = Array.from({length: pieLabels.length}, (_, i) => palette[i % palette.length]);
+
+        document.getElementById('btn-expense').className = type === 'expense' ? 'btn primary' : 'btn';
+        document.getElementById('btn-income').className = type === 'income' ? 'btn primary' : 'btn';
+
+        document.getElementById("transaction-details-container").style.display = "none";
+        currentCategory = null;
+
+        if (pieChartInstance) {
+            pieChartInstance.destroy();
+        }
+
+        pieChartInstance = new Chart(document.getElementById("distributionPieChart"), {
+            type: "pie",
+            data: {
+                labels: pieLabels,
+                datasets: [{
+                    data: pieData,
+                    backgroundColor: bgColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let val = context.raw;
+                                let pct = totalAmount > 0 ? ((val / totalAmount) * 100).toFixed(1) : 0;
+                                return ` ${formatter.format(val)}${currencyCode} (${pct}%)`;
+                            }
+                        }
+                    }
+                },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const index = elements[0].index;
+                        toggleTransactionDetails(pieLabels[index], type);
+                    }
+                }
+            }
+        });
+    }
+
+    // Khởi tạo mặc định
+    renderPieChart('expense');
+
+    // 3. Hàm hiển thị/ẩn bảng chi tiết giao dịch theo loại
+    function toggleTransactionDetails(categoryName, type) {
+        const container = document.getElementById("transaction-details-container");
+
+        if (currentCategory === categoryName && container.style.display === "block") {
+            container.style.display = "none";
+            currentCategory = null;
+            return;
+        }
+
+        currentCategory = categoryName;
+        const tbody = document.getElementById("transaction-details-body");
+
+        const typeLabel = type === 'expense' ? 'Expense' : 'Income';
+        document.getElementById("transaction-details-title").textContent = `${typeLabel} Details: ${categoryName}`;
+        tbody.innerHTML = "";
+
+        const filtered = transactions.filter(t => t.type === type && t.category === categoryName);
+
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="padding: 10px 5px;">No transactions found.</td></tr>';
+        } else {
+            const amountClass = type === 'expense' ? 'negative' : 'positive';
+            const amountPrefix = type === 'expense' ? '-' : '+';
+
+            filtered.forEach(t => {
+                const tr = document.createElement("tr");
+                tr.style.borderBottom = "1px solid #f0f0f0";
+
+                const descText = t.description ? t.description : '-';
+
+                tr.innerHTML = `
+                    <td style="padding: 10px 5px; white-space: nowrap;">${t.date}</td>
+                    <td style="padding: 10px 5px;"><span style="background: #f0f0f0; padding: 2px 6px; border-radius: 4px; font-size: 12px; color: #333;">${t.category}</span></td>
+                    <td style="padding: 10px 5px; color: #666;">${descText}</td>
+                    <td style="padding: 10px 5px; text-align: right;" class="${amountClass}">${amountPrefix}${formatter.format(t.amount)}${currencyCode}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        container.style.display = "block";
+        container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+</script>
+{% endblock %}

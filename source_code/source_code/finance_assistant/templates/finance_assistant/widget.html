@@ -1,0 +1,47 @@
+<div class="cc-ai-widget"
+     data-finance-widget
+     data-chat-url="{% url 'finance_assistant:api-chat' %}"
+     data-bootstrap-url="{% url 'finance_assistant:api-bootstrap' %}"
+     data-rating-base="/assistant/api/messages/">
+    <button class="cc-ai-launcher" type="button" aria-label="Open Campus Coin AI" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M12 3a7 7 0 0 0-7 7v1.3A3 3 0 0 0 3 14v2a3 3 0 0 0 3 3h1v-7H6v-2a6 6 0 0 1 12 0v2h-1v7h1a3 3 0 0 0 3-3v-2a3 3 0 0 0-2-2.7V10a7 7 0 0 0-7-7Zm-3 9h6v1.5a3 3 0 0 1-6 0V12Z"/>
+        </svg>
+        <span>AI</span>
+    </button>
+
+    <section class="cc-ai-panel" hidden aria-label="Campus Coin AI Assistant">
+        <header class="cc-ai-panel-head">
+            <div>
+                <strong>Campus Coin AI</strong>
+                <span><i></i> Personal finance assistant</span>
+            </div>
+            <div class="cc-ai-head-actions">
+                <a href="{% url 'finance_assistant:home' %}" title="Open full assistant">↗</a>
+                <button type="button" class="cc-ai-close" aria-label="Close assistant">×</button>
+            </div>
+        </header>
+
+        <div class="cc-ai-messages" data-chat-messages>
+            <div class="cc-ai-welcome" data-chat-empty>
+                <span class="cc-ai-orb">AI</span>
+                <strong>Ask about your money</strong>
+                <p>I can calculate from your Campus Coin transactions, not guess.</p>
+            </div>
+        </div>
+
+        <div class="cc-ai-suggestions" data-chat-suggestions>
+            <button type="button" data-prompt="How much do I have left this month?">Remaining funds</button>
+            <button type="button" data-prompt="What is my safe daily budget?">Daily budget</button>
+            <button type="button" data-prompt="Give me personalized saving tips.">Save smarter</button>
+        </div>
+
+        <form class="cc-ai-compose" data-chat-form>
+            <textarea rows="1" maxlength="2000" placeholder="Ask about spending, savings, or a purchase…" aria-label="Message Campus Coin AI"></textarea>
+            <button type="submit" aria-label="Send message">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.4 20.4 17.2-8.4L3.4 3.6 3 10l11 2-11 2 .4 6.4Z"/></svg>
+            </button>
+        </form>
+        <p class="cc-ai-disclaimer">Uses your Campus Coin records. Not a live bank balance.</p>
+    </section>
+</div>

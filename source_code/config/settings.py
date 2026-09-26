@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "channels", 
     "accounts",
     "transactions",
+    'report',
 ]
 
 MIDDLEWARE = [
@@ -94,7 +95,7 @@ LOGIN_URL = "accounts:login"
 LOGIN_REDIRECT_URL = "accounts:profile"
 LOGOUT_REDIRECT_URL = "accounts:login"
 
-LANGUAGE_CODE = "vi"
+LANGUAGE_CODE = "en-us"
 TIME_ZONE = "Asia/Ho_Chi_Minh"
 USE_I18N = True
 USE_TZ = True
@@ -115,9 +116,9 @@ EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in {"1", "true", "yes", "on"}
 EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in {"1", "true", "yes", "on"}
 EMAIL_TIMEOUT = int(os.getenv("EMAIL_TIMEOUT", "20"))
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DEFAULT_FROM_EMAIL",
-    f"Campus Coin <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Campus Coin <noreply@localhost>",
+DEFAULT_FROM_EMAIL = (
+    os.getenv("DEFAULT_FROM_EMAIL", "").strip()
+    or (f"Campus Coin <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else "Campus Coin <noreply@localhost>")
 )
 PUBLIC_BASE_URL = os.getenv("PUBLIC_BASE_URL", "").strip().rstrip("/")
 

@@ -1,14 +1,14 @@
 {% extends 'accounts/layouts/auth_base.html' %}
-{% block title %}Đăng nhập Admin | Campus Coin{% endblock %}
+{% block title %}Admin Login | Campus Coin{% endblock %}
 {% block content %}
-<div class="auth-card-head"><span class="auth-kicker">ADMIN PORTAL</span><h2>Đăng nhập quản trị</h2><p>Chỉ tài khoản có vai trò Quản trị viên mới được phép truy cập.</p></div>
+<div class="auth-card-head"><span class="auth-kicker">ADMIN PORTAL</span><h2>Administrator Sign In</h2><p>Only accounts with the Administrator role can access this area.</p></div>
 <form method="post" class="auth-form" novalidate>{% csrf_token %}
     {% if form.non_field_errors %}<div class="alert error">{{ form.non_field_errors }}</div>{% endif %}
     {% include 'accounts/partials/field.html' with field=form.email %}
-    <div class="password-field">{% include 'accounts/partials/field.html' with field=form.password %}<button class="password-toggle" type="button" data-toggle-password="id_password">Hiện</button></div>
-    <div class="form-actions"><a href="{% url 'accounts:admin_forgot_password' %}">Quên mật khẩu Admin?</a></div>
-    <button class="primary-btn" type="submit"><span>Vào Cổng Admin</span><span>→</span></button>
+    <div class="password-field">{% include 'accounts/partials/field.html' with field=form.password %}<button class="password-toggle" type="button" data-toggle-password="id_password">Show</button></div>
+    <div class="form-actions"><a href="{% url 'accounts:admin_forgot_password' %}">Forgot Admin password?</a></div>
+    <button class="primary-btn" type="submit"><span>Enter Admin Portal</span><span>→</span></button>
 </form>
-<div class="auth-footer"><span>Bạn là sinh viên?</span><a href="{% url 'accounts:login' %}">Đăng nhập User</a></div>
+<div class="auth-footer"><span>Are you a student?</span><a href="{% url 'accounts:login' %}">User Sign In</a></div>
 {% endblock %}
-{% block extra_js %}<script>document.querySelectorAll('[data-toggle-password]').forEach(function(b){b.addEventListener('click',function(){var i=document.getElementById(b.dataset.togglePassword);if(i){i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Hiện':'Ẩn';}})})</script>{% endblock %}
+{% block extra_js %}<script>document.querySelectorAll('[data-toggle-password]').forEach(function(b){b.addEventListener('click',function(){var i=document.getElementById(b.dataset.togglePassword);if(i){i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'Show':'Hide';}})})</script>{% endblock %}

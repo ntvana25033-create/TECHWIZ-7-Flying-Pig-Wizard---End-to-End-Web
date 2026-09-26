@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% if object %}Sửa Danh mục{% else %}Thêm Danh mục{% endif %}</title>
+    <title>{% if object %}Edit Category{% else %}Add Category{% endif %}</title>
     <style>
         :root {
             --primary-green: #2E7D32;
@@ -123,7 +123,7 @@
 </head>
 <body>
     <div class="form-card">
-        <h1>{% if object %}Sửa Danh mục{% else %}Thêm Danh mục Mới{% endif %}</h1>
+        <h1>{% if object %}Edit Category{% else %}Add New Category{% endif %}</h1>
         
         <form method="post">
             {% csrf_token %}
@@ -131,8 +131,8 @@
             {{ form.as_p }}
             
             <div class="btn-group">
-                <button type="submit">Lưu lại</button>
-                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">Hủy</a>
+                <button type="submit">Save</button>
+                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">Cancel</a>
             </div>
         </form>
     </div>

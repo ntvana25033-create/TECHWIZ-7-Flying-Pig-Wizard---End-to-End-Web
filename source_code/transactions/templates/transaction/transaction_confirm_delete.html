@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Xác nhận Xóa</title>
+    <title>Confirm Deletion</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -86,16 +86,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>Xác nhận Xóa Giao dịch</h1>
-        <p>Bạn có chắc chắn muốn xóa giao dịch: <br>
-            <strong>{{ object.amount }} VND - {{ object.category.name|default:"Không có danh mục" }}</strong> <br>
-            vào ngày <strong>{{ object.date|date:"d/m/Y" }}</strong> không?
+        <h1>Confirm Transaction Deletion</h1>
+        <p>Are you sure you want to delete this transaction: <br>
+            <strong>{{ object.amount }} VND - {{ object.category.name|default:"No category" }}</strong> <br>
+            on <strong>{{ object.date|date:"d/m/Y" }}</strong>?
         </p>
         
         <form method="post">
             {% csrf_token %}
-            <button type="submit">Có, hãy xóa</button>
-            <a href="{% url 'transactions:transaction-list' %}" class="btn-cancel">Không, quay lại</a>
+            <button type="submit">Yes, delete it</button>
+            <a href="{% url 'transactions:transaction-list' %}" class="btn-cancel">No, go back</a>
         </form>
     </div>
 </body>

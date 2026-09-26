@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Tất cả Giao dịch Hệ thống</title>
+    <title>All System Transactions</title>
     <style>
         :root {
             --primary-green: #2E7D32;
@@ -120,10 +120,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Danh sách Toàn bộ Giao dịch (Chỉ Xem)</h1>
+        <h1>All Transactions (Read Only)</h1>
         
         <div class="top-actions">
-            <a href="{% url 'transactions:admin-category-list' %}" class="btn-back">Quay lại Quản lý Danh mục</a>
+            <a href="{% url 'transactions:admin-category-list' %}" class="btn-back">Back to Category Management</a>
         </div>
         
         <hr>
@@ -131,12 +131,12 @@
         <table>
             <thead>
                 <tr>
-                    <th>Người dùng</th>
-                    <th>Ngày</th>
-                    <th>Danh mục</th>
-                    <th>Loại</th>
-                    <th>Số tiền (VND)</th>
-                    <th>Mô tả</th>
+                    <th>User</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Amount (VND)</th>
+                    <th>Description</th>
                 </tr>
             </thead>
             <tbody>
@@ -144,7 +144,7 @@
                     <tr>
                         <td><strong>{{ txn.user.email }}</strong></td>
                         <td>{{ txn.date|date:"d/m/Y" }}</td>
-                        <td>{{ txn.category.name|default:"Không có" }}</td>
+                        <td>{{ txn.category.name|default:"None" }}</td>
                         <td>
                             {% if txn.type == 'income' %}
                                 <span class="badge badge-income">{{ txn.get_type_display }}</span>
@@ -157,7 +157,7 @@
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="empty-state">Hệ thống chưa có giao dịch nào.</td>
+                        <td colspan="6" class="empty-state">There are no transactions in the system yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

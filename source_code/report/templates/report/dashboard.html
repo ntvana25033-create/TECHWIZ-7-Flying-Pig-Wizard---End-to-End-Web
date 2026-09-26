@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Báo cáo tài chính - Campus Coin{% endblock %}
+{% block content %}
+<div class="container">
+    <div class="page-head">
+        <div>
+            <p class="eyebrow">REPORT</p>
+            <h1>Báo cáo thu chi</h1>
+            <p class="muted">{{ start|date:"d/m/Y" }} → {{ end|date:"d/m/Y" }} · {{ transaction_count }} giao dịch</p>
+        </div>
+        <a class="btn" href="{% url 'transactions:transaction-list' %}">← Giao dịch</a>
+    </div>
+
+    <div class="card">
+        <form class="report-filter" method="get">
+            <div>
+                <label for="period">Khoảng thời gian</label>
+                <select name="period" id="period" class="form-control">
+                    {% for key,label in periods.items %}
+                        <option value="{{ key }}" {% if key == period %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="date">Ngày tham chiếu</label>
+                <input class="form-control" type="date" name="date" id="date" value="{{ reference }}">
+            </div>
+            <button class="btn primary" type="submit">Xem báo cáo</button>
+        </form>
+    </div>
+
+    <div class="stats-grid">
+        <div class="metric"><span>Tổng thu</span><strong class="positive">{{ total_income|floatformat:0 }} ₫</strong></div>
+        <div class="metric"><span>Tổng chi</span><strong class="negative">{{ total_expense|floatformat:0 }} ₫</strong></div>
+        <div class="metric"><span>Số dư</span><strong class="{% if balance >= 0 %}positive{% else %}negative{% endif %}">{{ balance|floatformat:0 }} ₫</strong></div>
+        <div class="metric"><span>Giao dịch</span><strong>{{ transaction_count }}</strong></div>
+    </div>
+
+    <div class="card chart-card wide">
+        <div class="page-head">
+            <div>
+                <h2>Xu hướng thu / chi</h2>
+                <p class="muted">Đường xanh là thu, đường đỏ là chi.</p>
+            </div>
+        </div>
+        <canvas id="incomeExpenseChart"></canvas>
+    </div>
+
+    <div class="report-grid">
+        <div class="card">
+            <h2>Chi tiết khoản thu</h2>
+            {% for row in income_categories %}
+            <div class="category-item">
+                <span>{{ row.category__name|default:"Chưa phân loại" }}</span>
+                <strong class="positive">{{ row.total|floatformat:0 }} ₫</strong>
+            </div>
+            {% empty %}<p class="empty">Không có khoản thu trong kỳ.</p>{% endfor %}
+        </div>
+        <div class="card">
+            <h2>Chi tiết khoản chi</h2>
+            {% for row in expense_categories %}
+            <div class="category-item">
+                <span>{{ row.category__name|default:"Chưa phân loại" }}</span>
+                <strong class="negative">{{ row.total|floatformat:0 }} ₫</strong>
+            </div>
+            {% empty %}<p class="empty">Không có khoản chi trong kỳ.</p>{% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+.report-filter{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end}
+.report-filter label{display:block;font-weight:700;margin-bottom:6px;font-size:13px}
+@media(max-width:700px){.report-filter{grid-template-columns:1fr}}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block extra_js %}
+{{ chart_data|json_script:"report-chart-data" }}
+<script>
+const rows = JSON.parse(document.getElementById("report-chart-data").textContent);
+new Chart(document.getElementById("incomeExpenseChart"), {
+    type: "line",
+    data: {
+        labels: rows.map(r => r.label),
+        datasets: [
+            {
+                label: "Thu",
+                data: rows.map(r => r.income),
+                borderColor: "#16834f",
+                backgroundColor: "rgba(22,131,79,.08)",
+                tension: .28,
+                fill: false
+            },
+            {
+                label: "Chi",
+                data: rows.map(r => r.expense),
+                borderColor: "#c43d3d",
+                backgroundColor: "rgba(196,61,61,.08)",
+                tension: .28,
+                fill: false
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: "index", intersect: false },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { callback: value => new Intl.NumberFormat("vi-VN").format(value) + " ₫" }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

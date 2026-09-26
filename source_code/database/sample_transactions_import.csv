@@ -1,0 +1,5 @@
+type,category,amount,description,date
+expense,,45000,Mua cơm trưa,2026-09-25
+expense,,50000,Đổ xăng xe máy,2026-09-25
+income,,1500000,Nhận lương làm thêm,2026-09-24
+expense,Food,35000,Mua cà phê,2026-09-23

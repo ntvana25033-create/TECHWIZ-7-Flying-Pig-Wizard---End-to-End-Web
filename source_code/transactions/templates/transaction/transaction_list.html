@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Giao dịch</title>
+    <title>Transaction Management</title>
     <style>
         :root {
             --primary-green: #2E7D32; 
@@ -145,11 +145,13 @@
 </head>
 <body>
     <div class="container">
-        <h1>Lịch sử Giao dịch của {{ user.email }}</h1>
+        <h1>Transaction History for {{ user.email }}</h1>
         
         <div class="action-links">
-            <a href="{% url 'transactions:transaction-create' %}">+ Thêm giao dịch mới</a>
-            <a href="{% url 'transactions:category-list' %}">Xem danh mục hệ thống</a>
+            <a href="{% url 'transactions:transaction-create' %}">+ Add new transaction</a>
+            <a href="{% url 'transactions:csv-import' %}">⬆ Import CSV + AI</a>
+            <a href="{% url 'transactions:category-list' %}">View system categories</a>
+            <a href="{% url 'report:dashboard' %}">📊 Reports</a>
         </div>
         
         <hr>
@@ -157,19 +159,19 @@
         <table>
             <thead>
                 <tr>
-                    <th>Ngày</th>
-                    <th>Danh mục</th>
-                    <th>Loại</th>
-                    <th>Số tiền (VND)</th>
-                    <th>Mô tả</th>
-                    <th>Thao tác</th>
+                    <th>Date</th>
+                    <th>Category</th>
+                    <th>Type</th>
+                    <th>Amount (VND)</th>
+                    <th>Description</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for txn in transactions %}
                     <tr>
                         <td>{{ txn.date|date:"d/m/Y" }}</td>
-                        <td>{{ txn.category.name|default:"Không có" }}</td>
+                        <td>{{ txn.category.name|default:"None" }}</td>
                         <td>
                             {% if txn.type == 'income' %}
                                 <span style="color: #2E7D32; font-weight: bold;">{{ txn.get_type_display }}</span>
@@ -180,13 +182,13 @@
                         <td>{{ txn.amount }}</td>
                         <td>{{ txn.description }}</td>
                         <td>
-                            <a href="{% url 'transactions:transaction-update' txn.pk %}" class="btn-action btn-edit">Sửa</a>
-                            <a href="{% url 'transactions:transaction-delete' txn.pk %}" class="btn-action btn-delete">Xóa</a>
+                            <a href="{% url 'transactions:transaction-update' txn.pk %}" class="btn-action btn-edit">Edit</a>
+                            <a href="{% url 'transactions:transaction-delete' txn.pk %}" class="btn-action btn-delete">Delete</a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="empty-state">Bạn chưa có giao dịch nào.</td>
+                        <td colspan="6" class="empty-state">You do not have any transactions yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

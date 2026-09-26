@@ -33,11 +33,11 @@ def admin_login_view(request):
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         if user.role.role_name != Role.Name.ADMIN:
-            form.add_error(None, "Tài khoản này không có quyền quản trị")
+            form.add_error(None, "This account does not have administrator privileges")
         else:
             login(request, user)
             record_login_session(request, user)
-            messages.success(request, "Đăng nhập quản trị thành công")
+            messages.success(request, "Administrator login successful")
             return redirect("accounts:admin_dashboard")
 
     return render(
@@ -66,7 +66,7 @@ def admin_forgot_password_view(request):
             send_password_reset_email(request, user)
         messages.success(
             request,
-            "Nếu email quản trị tồn tại trong hệ thống, liên kết đặt lại mật khẩu đã được gửi",
+            "If the administrator email exists in the system, a password reset link has been sent",
         )
         return redirect("accounts:admin_forgot_password")
 
@@ -81,7 +81,7 @@ def admin_forgot_password_view(request):
 def admin_logout_view(request):
     revoke_current_session(request)
     logout(request)
-    messages.success(request, "Đã đăng xuất khỏi Cổng Admin")
+    messages.success(request, "Signed out of the Admin Portal")
     return redirect("accounts:admin_login")
 
 
@@ -137,7 +137,7 @@ def admin_user_create_view(request):
     form = AdminUserCreateForm(request.POST or None)
     if request.method == "POST" and form.is_valid():
         user = form.save()
-        messages.success(request, f"Đã tạo tài khoản {user.email}")
+        messages.success(request, f"Created account {user.email}")
         return redirect("accounts:admin_user_detail", user_id=user.pk)
     return render(request, "accounts/admin/user_form.html", {"form": form, "mode": "create"})
 
@@ -166,9 +166,9 @@ def admin_user_edit_view(request, user_id):
     if request.method == "POST" and form.is_valid():
         if target.pk == request.user.pk:
             if form.cleaned_data["role"] != Role.Name.ADMIN:
-                form.add_error("role", "Bạn không thể tự hạ quyền tài khoản đang đăng nhập")
+                form.add_error("role", "You cannot downgrade the role of the account you are currently using")
             if form.cleaned_data["status"] != User.Status.ACTIVE:
-                form.add_error("status", "Bạn không thể tự khóa hoặc vô hiệu hóa tài khoản đang đăng nhập")
+                form.add_error("status", "You cannot lock or disable the account you are currently using")
         if not form.errors:
             previous_status = target.status
             previous_role = target.role.role_name
@@ -177,7 +177,7 @@ def admin_user_edit_view(request, user_id):
                 previous_status == User.Status.ACTIVE and user.status != User.Status.ACTIVE
             ):
                 revoke_all_sessions(user)
-            messages.success(request, "Đã cập nhật tài khoản")
+            messages.success(request, "Account updated successfully")
             return redirect("accounts:admin_user_detail", user_id=user.pk)
 
     return render(
@@ -194,18 +194,18 @@ def admin_user_toggle_status_view(request, user_id):
 
     target = get_object_or_404(User, pk=user_id, deleted_at__isnull=True)
     if target.pk == request.user.pk:
-        messages.error(request, "Bạn không thể tự vô hiệu hóa tài khoản của mình")
+        messages.error(request, "You cannot disable your own account")
         return redirect("accounts:admin_user_detail", user_id=user_id)
 
     if target.status == User.Status.ACTIVE:
         target.status = User.Status.DISABLED
         revoke_all_sessions(target)
-        messages.success(request, "Đã vô hiệu hóa tài khoản")
+        messages.success(request, "Account disabled successfully")
     else:
         target.status = User.Status.ACTIVE
         target.failed_login_attempts = 0
         target.locked_until = None
-        messages.success(request, "Đã kích hoạt tài khoản")
+        messages.success(request, "Account activated successfully")
 
     target.save(
         update_fields=[
@@ -224,12 +224,12 @@ def admin_user_send_reset_view(request, user_id):
         return redirect("accounts:admin_user_detail", user_id=user_id)
     target = get_object_or_404(User, pk=user_id, deleted_at__isnull=True)
     if target.status == User.Status.DISABLED:
-        messages.error(request, "Tài khoản đang bị vô hiệu hóa. Hãy kích hoạt trước khi gửi link reset")
+        messages.error(request, "This account is disabled. Activate it before sending a reset link")
         return redirect("accounts:admin_user_detail", user_id=user_id)
     if send_password_reset_email(request, target):
-        messages.success(request, "Đã tạo và gửi liên kết đặt lại mật khẩu")
+        messages.success(request, "Password reset link created and sent")
     else:
-        messages.error(request, "Không thể gửi email reset. Hãy kiểm tra cấu hình EMAIL trong .env")
+        messages.error(request, "Unable to send the reset email. Check the EMAIL configuration in .env")
     return redirect("accounts:admin_user_detail", user_id=user_id)
 
 
@@ -239,22 +239,22 @@ def admin_user_delete_view(request, user_id):
         return redirect("accounts:admin_user_detail", user_id=user_id)
     target = get_object_or_404(User, pk=user_id, deleted_at__isnull=True)
     if target.pk == request.user.pk:
-        messages.error(request, "Bạn không thể tự xóa tài khoản đang đăng nhập")
+        messages.error(request, "You cannot delete the account you are currently using")
         return redirect("accounts:admin_user_detail", user_id=user_id)
     target.deleted_at = timezone.now()
     target.status = User.Status.DISABLED
     target.save(update_fields=["deleted_at", "status", "updated_at"])
     revoke_all_sessions(target)
-    messages.success(request, "Đã xóa mềm tài khoản khỏi hệ thống")
+    messages.success(request, "Account soft-deleted from the system")
     return redirect("accounts:admin_user_list")
 
 
 @admin_required
 def admin_profile_view(request):
-    form = AdminProfileForm(request.POST or None, user=request.user)
+    form = AdminProfileForm(request.POST or None, request.FILES or None, user=request.user)
     if request.method == "POST" and form.is_valid():
         form.save()
-        messages.success(request, "Đã cập nhật hồ sơ quản trị")
+        messages.success(request, "Administrator profile updated successfully")
         return redirect("accounts:admin_profile")
     return render(request, "accounts/admin/profile.html", {"form": form})
 
@@ -267,7 +267,7 @@ def admin_change_password_view(request):
         revoke_all_sessions(user)
         update_session_auth_hash(request, user)
         record_login_session(request, user)
-        messages.success(request, "Đổi mật khẩu thành công. Các phiên quản trị khác đã bị đăng xuất")
+        messages.success(request, "Password changed successfully. Other administrator sessions have been signed out")
         return redirect("accounts:admin_profile")
     return render(request, "accounts/admin/change_password.html", {"form": form})
 
@@ -295,7 +295,7 @@ def admin_revoke_session_view(request, session_id):
         and tracked.session_token_hash == hash_session_key(request.session.session_key)
     )
     tracked.revoke()
-    messages.success(request, "Đã thu hồi phiên quản trị")
+    messages.success(request, "Administrator session revoked")
     if is_current:
         logout(request)
         return redirect("accounts:admin_login")

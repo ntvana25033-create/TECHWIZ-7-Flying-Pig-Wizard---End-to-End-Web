@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Xác nhận import | Campus Coin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f8f4;color:#203128;font-family:'Segoe UI',Arial,sans-serif;padding:36px 18px}.wrap{max-width:950px;margin:auto}.card{background:#fff;border:1px solid #dce9df;border-radius:16px;padding:26px;box-shadow:0 10px 30px rgba(29,75,43,.07);margin-bottom:16px}h1{margin:0 0 8px;color:#1b5e20}.muted{color:#66776d}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}.metric{background:#eef7f0;border-radius:12px;padding:16px}.metric span{display:block;color:#65776b;font-size:12px;margin-bottom:6px}.metric strong{font-size:22px}.income{color:#1d713c}.expense{color:#b23832}table{width:100%;border-collapse:collapse}th,td{padding:10px;border-bottom:1px solid #e6ece8;text-align:left}.actions{display:flex;gap:12px;flex-wrap:wrap}.btn{border:0;border-radius:9px;padding:12px 18px;font-weight:800;text-decoration:none;cursor:pointer}.primary{background:#2e7d32;color:#fff}.secondary{background:#e8f5e9;color:#1b5e20}.warning{background:#fff5d6;border:1px solid #f0d67c;border-radius:10px;padding:13px;margin:18px 0;color:#6e5300}@media(max-width:650px){.metrics{grid-template-columns:1fr}}
+</style>
+</head>
+<body><div class="wrap">
+<div class="card"><h1>Xác nhận lần cuối</h1><p class="muted">Sau bước này, {{ row_count }} dòng sẽ được tạo thành Transaction thật trong SQL. Description + Category cuối cùng cũng được dùng làm feedback cho AI (các mẫu trùng hoàn toàn sẽ không được thêm lại).</p>
+<div class="metrics"><div class="metric"><span>Số giao dịch</span><strong>{{ row_count }}</strong></div><div class="metric"><span>Tổng thu</span><strong class="income">{{ income_total }}</strong></div><div class="metric"><span>Tổng chi</span><strong class="expense">{{ expense_total }}</strong></div></div>
+<div class="warning">Đây là bước ghi dữ liệu thật. Nếu cần sửa bất kỳ dòng nào, hãy quay lại bảng tạm trước khi xác nhận.</div>
+<h3>Phân bố Category</h3><table><thead><tr><th>Category</th><th>Số dòng</th></tr></thead><tbody>{% for name,count in category_counts %}<tr><td>{{ name }}</td><td>{{ count }}</td></tr>{% empty %}<tr><td colspan="2">Không có dữ liệu</td></tr>{% endfor %}</tbody></table>
+</div>
+<div class="card"><div class="actions"><form method="post">{% csrf_token %}<button class="btn primary" type="submit" onclick="return confirm('Xác nhận ghi toàn bộ giao dịch vào SQL?');">Xác nhận nhập vào hệ thống</button></form><a class="btn secondary" href="{% url 'transactions:csv-import-preview' batch.pk %}">← Quay lại bảng tạm để sửa</a></div></div>
+</div></body></html>

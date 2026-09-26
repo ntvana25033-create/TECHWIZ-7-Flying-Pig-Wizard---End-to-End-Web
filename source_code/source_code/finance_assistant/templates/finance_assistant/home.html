@@ -1,0 +1,133 @@
+{% extends 'accounts/layouts/user_base.html' %}
+
+{% block title %}AI Assistant | Campus Coin{% endblock %}
+
+{% block content %}
+<section class="assistant-page"
+         data-finance-chat-page
+         data-chat-url="{% url 'finance_assistant:api-chat' %}"
+         data-rating-base="/assistant/api/messages/"
+         data-session-id="{% if active_session %}{{ active_session.id }}{% endif %}">
+    <aside class="assistant-history-panel">
+        <div class="assistant-history-head">
+            <div>
+                <span class="assistant-eyebrow">CAMPUS COIN INTELLIGENCE</span>
+                <h1>AI Assistant</h1>
+            </div>
+            <form method="post" action="{% url 'finance_assistant:new-chat' %}">
+                {% csrf_token %}
+                <button class="assistant-new-chat" type="submit" title="Start new chat">+</button>
+            </form>
+        </div>
+
+        <div class="assistant-engine-status">
+            <span class="assistant-status-dot"></span>
+            {% if assistant_ai_enabled %}
+                Hybrid AI + verified finance engine
+            {% else %}
+                Verified local finance engine
+            {% endif %}
+        </div>
+
+        <nav class="assistant-session-list" aria-label="Chat history">
+            {% for session in chat_sessions %}
+                <a class="assistant-session-item {% if active_session and active_session.id == session.id %}active{% endif %}"
+                   href="{% url 'finance_assistant:home' %}?session={{ session.id }}">
+                    <span>{{ session.title }}</span>
+                    <small>{{ session.last_message_at|date:"M d, H:i" }}</small>
+                </a>
+            {% empty %}
+                <div class="assistant-empty-history">No conversations yet.</div>
+            {% endfor %}
+        </nav>
+
+        {% if active_session %}
+        <form class="assistant-delete-form" method="post" action="{% url 'finance_assistant:delete-chat' active_session.id %}" onsubmit="return confirm('Delete this conversation?');">
+            {% csrf_token %}
+            <button type="submit">Delete conversation</button>
+        </form>
+        {% endif %}
+    </aside>
+
+    <section class="assistant-chat-panel">
+        <header class="assistant-chat-head">
+            <div class="assistant-avatar">AI</div>
+            <div>
+                <h2>Campus Coin AI</h2>
+                <p>Grounded in your own transaction data</p>
+            </div>
+            <div class="assistant-privacy-chip">Private workspace</div>
+        </header>
+
+        <div class="assistant-chat-messages" data-chat-messages>
+            {% if active_messages %}
+                {% for message in active_messages %}
+                    <article class="assistant-message {{ message.role }}" data-message-id="{{ message.id }}">
+                        <div class="assistant-message-avatar">{% if message.role == 'assistant' %}AI{% else %}YOU{% endif %}</div>
+                        <div class="assistant-message-wrap">
+                            <div class="assistant-message-bubble" data-render-message>{{ message.content }}</div>
+                            <div class="assistant-message-meta">
+                                <time>{{ message.created_at|date:"H:i" }}</time>
+                                {% if message.role == 'assistant' %}
+                                <span class="assistant-rating" data-rating-controls data-message-id="{{ message.id }}">
+                                    <button type="button" data-rating="1" class="{% if message.rating == 1 %}selected{% endif %}" aria-label="Helpful">Useful</button>
+                                    <button type="button" data-rating="-1" class="{% if message.rating == -1 %}selected{% endif %}" aria-label="Not helpful">Needs work</button>
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="assistant-empty-state" data-chat-empty>
+                    <div class="assistant-empty-orb">AI</div>
+                    <h2>Turn your transactions into answers.</h2>
+                    <p>Ask in English or Vietnamese. Core money calculations are performed directly from Campus Coin data before the answer is written.</p>
+                    <div class="assistant-starter-grid">
+                        <button type="button" data-prompt="How much do I have left this month?">
+                            <strong>Check remaining funds</strong>
+                            <span>Allowance + income − expenses</span>
+                        </button>
+                        <button type="button" data-prompt="What is my safe daily budget to keep my savings goal?">
+                            <strong>Set a safe daily limit</strong>
+                            <span>Protect your monthly savings goal</span>
+                        </button>
+                        <button type="button" data-prompt="What category costs me the most this month?">
+                            <strong>Find spending leaks</strong>
+                            <span>See your highest-cost categories</span>
+                        </button>
+                        <button type="button" data-prompt="Can I afford 500k while keeping my savings goal?">
+                            <strong>Check a purchase</strong>
+                            <span>Test “Can I afford this?”</span>
+                        </button>
+                        <button type="button" data-prompt="Compare my spending with last month.">
+                            <strong>Compare months</strong>
+                            <span>Spot changes in your spending</span>
+                        </button>
+                        <button type="button" data-prompt="Forecast my month-end remaining funds.">
+                            <strong>Forecast month end</strong>
+                            <span>Project from your current pace</span>
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="assistant-quick-row" data-chat-suggestions>
+            <button type="button" data-prompt="Give me personalized saving tips.">Saving tips</button>
+            <button type="button" data-prompt="Show my 5 most recent transactions.">Recent transactions</button>
+            <button type="button" data-prompt="What are my biggest expenses this month?">Biggest expenses</button>
+            <button type="button" data-prompt="Summarize my financial situation this month.">Monthly summary</button>
+        </div>
+
+        <form class="assistant-compose" data-chat-form>
+            <textarea rows="1" maxlength="2000" placeholder="Ask Campus Coin AI anything about your budget…" aria-label="Message Campus Coin AI"></textarea>
+            <button type="submit">
+                <span>Send</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.4 20.4 17.2-8.4L3.4 3.6 3 10l11 2-11 2 .4 6.4Z"/></svg>
+            </button>
+        </form>
+        <p class="assistant-footnote">Campus Coin AI reads only the finance data available to your signed-in account. Estimates are not live bank balances.</p>
+    </section>
+</section>
+{% endblock %}

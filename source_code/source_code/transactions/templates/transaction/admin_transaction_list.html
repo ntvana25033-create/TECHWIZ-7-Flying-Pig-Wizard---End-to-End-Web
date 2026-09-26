@@ -1,0 +1,9 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Transaction Management | Campus Coin{% endblock %}
+{% block page_name %}Transaction Management{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><span class="admin-section-kicker">TRANSACTIONS</span><h1>All System Transactions</h1><p>Read-only system-wide transaction view.</p></div><a class="btn" href="{% url 'transactions:admin-category-list' %}">Category Management</a></div>
+<section class="admin-card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Date</th><th>Category</th><th>Type</th><th class="money">Amount</th><th>Description</th></tr></thead><tbody>
+{% for txn in transactions %}<tr><td><strong>{{ txn.user.email }}</strong></td><td>{{ txn.date|date:"M d, Y" }}</td><td>{{ txn.category.name|default:"Uncategorized" }}</td><td><span class="pill {{ txn.type }}">{{ txn.get_type_display }}</span></td><td class="money">{{ txn.amount|floatformat:2 }}</td><td>{{ txn.description|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6" class="empty">There are no transactions in the system yet.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}

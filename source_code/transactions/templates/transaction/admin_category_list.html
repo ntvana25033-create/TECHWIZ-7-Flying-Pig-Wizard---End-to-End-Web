@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý Danh mục</title>
+    <title>Category Management</title>
     <style>
         :root {
             --primary-green: #2E7D32;
@@ -167,11 +167,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Quản lý Danh mục Thu / Chi</h1>
+        <h1>Income / Expense Category Management</h1>
         
         <div class="top-actions">
-            <a href="{% url 'transactions:admin-category-create' %}" class="btn-add">+ Thêm danh mục mới</a>
-            <a href="{% url 'transactions:admin-transaction-list' %}" class="btn-view-all">Xem tất cả giao dịch</a>
+            <a href="{% url 'transactions:admin-category-create' %}" class="btn-add">+ Add new category</a>
+            <a href="{% url 'transactions:admin-transaction-list' %}" class="btn-view-all">View all transactions</a>
         </div>
         
         <hr>
@@ -179,9 +179,9 @@
         <table>
             <thead>
                 <tr>
-                    <th>Tên danh mục</th>
-                    <th>Phân loại</th>
-                    <th>Thao tác</th>
+                    <th>Category name</th>
+                    <th>Classification</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -196,13 +196,13 @@
                             {% endif %}
                         </td>
                         <td>
-                            <a href="{% url 'transactions:admin-category-update' cat.pk %}" class="action-link edit-link">Sửa</a>
-                            <a href="{% url 'transactions:admin-category-delete' cat.pk %}" class="action-link delete-link">Xóa</a>
+                            <a href="{% url 'transactions:admin-category-update' cat.pk %}" class="action-link edit-link">Edit</a>
+                            <a href="{% url 'transactions:admin-category-delete' cat.pk %}" class="action-link delete-link">Delete</a>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="3" class="empty-state">Hệ thống chưa có danh mục nào.</td>
+                        <td colspan="3" class="empty-state">There are no categories in the system yet.</td>
                     </tr>
                 {% endfor %}
             </tbody>

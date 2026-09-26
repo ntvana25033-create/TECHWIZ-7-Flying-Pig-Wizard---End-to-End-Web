@@ -1,0 +1,59 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#07110e">
+    <title>{% block title %}Campus Coin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'accounts/css/accounts.css' %}?v=20260926">
+    {% if admin_portal %}<link rel="stylesheet" href="{% static 'accounts/css/admin.css' %}?v=20260926">{% endif %}
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="auth-page {% if admin_portal %}admin-auth-page{% endif %}">
+<main class="auth-shell">
+    <section class="auth-brand-panel {% if admin_portal %}admin-auth-brand{% endif %}">
+        <div class="brand-grid" aria-hidden="true"></div>
+        <div class="brand-glow brand-glow-one" aria-hidden="true"></div>
+        <div class="brand-glow brand-glow-two" aria-hidden="true"></div>
+        <div class="market-line" aria-hidden="true"><span class="market-dot market-dot-one"></span><span class="market-dot market-dot-two"></span><span class="market-dot market-dot-three"></span></div>
+        <a href="/" class="brand-mark"><span class="brand-logo">CC</span><span>Campus Coin</span></a>
+        <div class="brand-copy">
+            {% if admin_portal %}
+                <span class="eyebrow">SECURE ACCESS · CAMPUS CONTROL</span>
+                <h1>Manage Campus Coin with confidence.</h1>
+                <p>Administrator access for account management, access control, and system oversight.</p>
+            {% else %}
+                <span class="eyebrow">SMART SPENDING · STUDENT STYLE</span>
+                <h1>A simpler way for students to manage money.</h1>
+                <p>Record income and expenses, track budgets, and build savings goals in one place.</p>
+            {% endif %}
+        </div>
+        <div class="feature-stack">
+            {% if admin_portal %}
+                <div class="feature-item"><span class="feature-icon">✓</span><div><strong>Protected administrator access</strong><small>Only authorized administrator accounts can enter the control area.</small></div></div>
+                <div class="feature-item"><span class="feature-icon">U</span><div><strong>Account management</strong><small>Create, update, review, and control student account access.</small></div></div>
+                <div class="feature-item"><span class="feature-icon">S</span><div><strong>Session security</strong><small>Review administrator sessions and revoke access when necessary.</small></div></div>
+            {% else %}
+                <div class="feature-item"><span class="feature-icon">↗</span><div><strong>Quick transaction entry</strong><small>Track income and expenses by personal category.</small></div></div>
+                <div class="feature-item"><span class="feature-icon">$</span><div><strong>Budget tracking</strong><small>Know how much you have spent during the month.</small></div></div>
+                <div class="feature-item"><span class="feature-icon">◎</span><div><strong>Savings goals</strong><small>Keep your monthly target visible while managing everyday spending.</small></div></div>
+            {% endif %}
+        </div>
+        <p class="brand-foot">Campus Coin · End-to-End Web Solution</p>
+    </section>
+    <section class="auth-content">
+        <div class="auth-card-wrap">
+            <div class="card-orbit card-orbit-one"></div>
+            <div class="card-orbit card-orbit-two"></div>
+            <div class="auth-card">
+                <div class="auth-card-badge">CC</div>
+                {% if messages %}{% for message in messages %}<div class="alert {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </section>
+</main>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

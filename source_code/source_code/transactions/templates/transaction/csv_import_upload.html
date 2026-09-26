@@ -1,0 +1,40 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Import CSV | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">CSV IMPORT</p>
+        <h1>Import transactions from CSV</h1>
+        <p class="muted">Nothing is written to the final Transaction table until you review the AI suggestions and confirm the batch.</p>
+    </div>
+    <a class="btn" href="{% url 'transactions:transaction-list' %}">Back to transactions</a>
+</div>
+
+<section class="card">
+    <div class="import-steps">
+        <div><strong>1. Upload</strong><span>Select your CSV file.</span></div>
+        <div><strong>2. AI classify</strong><span>AI suggests a category from the description.</span></div>
+        <div><strong>3. Review</strong><span>Edit rows directly in the staging table.</span></div>
+        <div><strong>4. Confirm</strong><span>Create transactions and train AI from the final choices.</span></div>
+    </div>
+    <p class="muted"><strong>CSV columns:</strong> <code>type</code>, <code>category</code>, <code>amount</code>, <code>description</code>, <code>date</code>. The <code>category</code> column may be blank so the AI can classify it. Use <code>income</code> or <code>expense</code> for type. Recommended date format: <code>YYYY-MM-DD</code>.</p>
+    <form method="post" enctype="multipart/form-data" class="csv-upload-form">
+        {% csrf_token %}
+        <div class="field">
+            {{ form.csv_file.label_tag }}
+            {{ form.csv_file }}
+            {% if form.csv_file.help_text %}<small class="muted">{{ form.csv_file.help_text }}</small>{% endif %}
+            {% for error in form.csv_file.errors %}<div class="error">{{ error }}</div>{% endfor %}
+        </div>
+        <div class="inline-actions">
+            <button class="btn primary" type="submit">Upload and classify with AI</button>
+            <a class="btn" href="{% url 'transactions:csv-import-template' %}">Download CSV template</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+{% block extra_head %}
+<style>
+.import-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 24px}.import-steps div{background:#edf7ef;border:1px solid #d4ead9;border-radius:12px;padding:14px}.import-steps strong,.import-steps span{display:block}.import-steps span{font-size:12px;color:#66776d;margin-top:5px}.csv-upload-form{margin-top:22px}@media(max-width:800px){.import-steps{grid-template-columns:1fr 1fr}}@media(max-width:500px){.import-steps{grid-template-columns:1fr}}
+</style>
+{% endblock %}

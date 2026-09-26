@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Danh mục Thu Chi</title>
+    <title>Income and Expense Categories</title>
     <style>
         :root {
             --primary-green: #2e7d32; 
@@ -117,8 +117,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Danh sách Hạng mục</h1>
-        <a href="{% url 'transactions:transaction-list' %}" class="btn-back">⬅ Quay lại Giao dịch</a>
+        <h1>Category List</h1>
+        <a href="{% url 'transactions:transaction-list' %}" class="btn-back">⬅ Back to Transactions</a>
         <hr>
         <ul>
             {% for category in categories %}
@@ -127,7 +127,7 @@
                     <span class="category-type">{{ category.get_type_display }}</span>
                 </li>
             {% empty %}
-                <li class="empty-msg">Chưa có danh mục nào trong hệ thống.</li>
+                <li class="empty-msg">There are no categories in the system yet.</li>
             {% endfor %}
         </ul>
     </div>

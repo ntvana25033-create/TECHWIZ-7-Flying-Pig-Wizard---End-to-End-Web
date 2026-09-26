@@ -1,0 +1,5 @@
+type,category,amount,description,date
+expense,,45000,Buy breakfast,2026-09-25
+expense,,50000,buy a new pen,2026-09-25
+income,,1500000,get a coupon from the shop,2026-09-24
+expense,Food,35000,buy food,2026-09-23

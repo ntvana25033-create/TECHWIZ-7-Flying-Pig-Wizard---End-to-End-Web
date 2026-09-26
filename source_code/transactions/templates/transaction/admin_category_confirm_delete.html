@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Xác nhận Xóa</title>
+    <title>Confirm Deletion</title>
     <style>
         :root {
             --primary-green: #2E7D32;
@@ -100,8 +100,8 @@
 </head>
 <body>
     <div class="confirm-card">
-        <h1>Bạn có chắc chắn muốn xóa?</h1>
-        <p>Hệ thống sẽ xóa vĩnh viễn danh mục: 
+        <h1>Are you sure you want to delete this?</h1>
+        <p>The system will permanently delete the category: 
             <strong>{{ object.name }}</strong> 
             ({{ object.get_type_display }})
         </p>
@@ -109,8 +109,8 @@
         <form method="post">
             {% csrf_token %}
             <div class="btn-group">
-                <button type="submit">Có, hãy xóa</button>
-                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">Không, quay lại</a>
+                <button type="submit">Yes, delete it</button>
+                <a href="{% url 'transactions:admin-category-list' %}" class="btn-cancel">No, go back</a>
             </div>
         </form>
     </div>

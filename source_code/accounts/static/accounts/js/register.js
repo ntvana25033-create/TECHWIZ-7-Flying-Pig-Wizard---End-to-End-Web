@@ -5,7 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!input) return;
       const show = input.type === "password";
       input.type = show ? "text" : "password";
-      button.textContent = show ? "Ẩn" : "Hiện";
+      button.textContent = show ? "Hide" : "Show";
     });
   });
 
@@ -23,11 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
     if (/[^A-Za-z0-9]/.test(value)) score++;
 
     const states = [
-      ["0%", "#b7c3bd", "Mật khẩu nên có ít nhất 8 ký tự."],
-      ["25%", "#d92d20", "Mật khẩu yếu"],
-      ["50%", "#f79009", "Mật khẩu trung bình"],
-      ["75%", "#2e90fa", "Mật khẩu khá"],
-      ["100%", "#176b45", "Mật khẩu mạnh"],
+      ["0%", "#b7c3bd", "Password should contain at least 8 characters."],
+      ["25%", "#d92d20", "Weak password"],
+      ["50%", "#f79009", "Medium-strength password"],
+      ["75%", "#2e90fa", "Good password"],
+      ["100%", "#176b45", "Strong password"],
     ];
     const [width, color, label] = states[score];
     bar.style.width = width;

@@ -11,6 +11,7 @@ urlpatterns = [
     path("account/", include("accounts.urls")),
     path("transactions/", include("transactions.urls")),
     path("django-admin/", admin.site.urls),
+    path("report/", include("report.urls")),
 ]
 
 if settings.DEBUG:

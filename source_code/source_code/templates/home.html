@@ -1,0 +1,113 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Campus Coin | Student Finance Portal</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260926-ui-refresh">
+</head>
+<body class="public-page">
+    <header class="public-nav">
+        <div class="public-nav-inner">
+            <a href="{% url 'home' %}" class="public-brand">
+                <span class="public-brand-mark">CC</span>
+                <span class="public-brand-copy">
+                    <strong>Campus Coin</strong>
+                    <small>Student Finance Portal</small>
+                </span>
+            </a>
+            <nav class="public-nav-links">
+                <a href="#features">Features</a>
+                <a href="#experience">Experience</a>
+                <a href="#cta">Get Started</a>
+            </nav>
+            <div class="public-nav-actions">
+                <a class="btn" href="{% url 'accounts:admin_login' %}">Admin Portal</a>
+                <a class="btn" href="{% url 'accounts:login' %}">Sign In</a>
+                <a class="btn primary" href="{% url 'accounts:register' %}">Create Account</a>
+            </div>
+        </div>
+    </header>
+
+    <section class="public-hero">
+        <div class="public-section public-hero-grid">
+            <div>
+                <span class="public-eyebrow">SMART SPENDING · STUDENT STYLE</span>
+                <h1>A polished finance workspace built for student life.</h1>
+                <p>Campus Coin helps students record transactions, monitor budgets, protect savings goals, review reports, and use an AI assistant grounded in their own transaction data.</p>
+                <div class="hero-actions">
+                    <a class="btn primary" href="{% url 'accounts:register' %}">Start for free</a>
+                    <a class="btn" href="{% url 'accounts:login' %}">Sign in</a>
+                </div>
+            </div>
+            <div class="hero-card">
+                <div class="dashboard-preview">
+                    <div class="preview-row">
+                        <div class="preview-stat"><span>Monthly allowance</span><strong>3,000,000 VND</strong></div>
+                        <div class="preview-stat"><span>Savings goal</span><strong>1,000,000 VND</strong></div>
+                        <div class="preview-stat"><span>Remaining</span><strong class="positive">1,420,000 VND</strong></div>
+                    </div>
+                    <div class="preview-table">
+                        <div class="preview-line"><strong>Date</strong><strong>Type</strong><strong>Amount</strong></div>
+                        <div class="preview-line"><span>Sep 25, 2026</span><span class="preview-pill">Income</span><strong>2,000,000</strong></div>
+                        <div class="preview-line"><span>Sep 26, 2026</span><span class="preview-pill">Expense</span><strong>120,000</strong></div>
+                        <div class="preview-line"><span>Sep 26, 2026</span><span class="preview-pill">Expense</span><strong>85,000</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="public-section">
+        <div class="section-head">
+            <div>
+                <span class="public-eyebrow">Core Modules</span>
+                <h2>Everything important in one place.</h2>
+            </div>
+            <p>The homepage idea for your project is to introduce value clearly, then guide users to Register, Sign In, or enter the Admin Portal.</p>
+        </div>
+        <div class="feature-grid">
+            <article class="feature-card"><div class="feature-icon">$</div><h3>Transaction tracking</h3><p>Quickly record income and expenses with categories, clean forms, and an interface that remains usable across mobile, tablet, and desktop.</p></article>
+            <article class="feature-card"><div class="feature-icon">%</div><h3>Budget awareness</h3><p>See how your monthly spending relates to your allowance and savings goal so you always know how much room you have left.</p></article>
+            <article class="feature-card"><div class="feature-icon">AI</div><h3>AI assistant</h3><p>Ask for summaries, category insights, safe spending limits, and quick finance explanations grounded in Campus Coin data.</p></article>
+        </div>
+    </section>
+
+    <section id="experience" class="public-section">
+        <div class="section-head">
+            <div>
+                <span class="public-eyebrow">Design Direction</span>
+                <h2>User portal and Admin portal with distinct moods.</h2>
+            </div>
+            <p>User screens use a dark neon green finance style, while Admin screens use a stronger red contrast to avoid a boring look and immediately communicate elevated control access.</p>
+        </div>
+        <div class="info-grid">
+            <article class="info-card"><span>User Experience</span><h3>Modern student dashboard</h3><p>Suggested homepage sections: hero banner, feature highlights, dashboard preview, how it works, call-to-action, and quick links to Register, Login, and AI Assistant.</p></article>
+            <article class="info-card"><span>Admin Experience</span><h3>Sharper contrast for management</h3><p>The Admin portal should feel more authoritative, with stronger contrast, bold stat cards, cleaner tables, and obvious action buttons for account management.</p></article>
+        </div>
+    </section>
+
+    <section id="cta" class="public-section">
+        <div class="cta-panel">
+            <div>
+                <span class="public-eyebrow">Ready to Launch</span>
+                <h2>Turn the project into something that actually looks professional.</h2>
+                <p>This landing page is only the starting point. From here, the same visual system can be carried through forms, tables, profile pages, charts, notifications, and every admin management screen.</p>
+            </div>
+            <div class="stack">
+                <a class="btn primary" href="{% url 'accounts:register' %}">Create a student account</a>
+                <a class="btn" href="{% url 'accounts:login' %}">Sign in as student</a>
+                <a class="btn" href="{% url 'accounts:admin_login' %}">Open Admin Portal</a>
+            </div>
+        </div>
+    </section>
+
+    <footer class="public-footer">
+        <div class="public-footer-inner">
+            <span>Campus Coin · End-to-End Web Solution</span>
+            <span>Responsive on desktop, tablet, and mobile</span>
+        </div>
+    </footer>
+</body>
+</html>

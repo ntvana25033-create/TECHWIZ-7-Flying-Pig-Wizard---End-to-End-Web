@@ -1,0 +1,7 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}{% if object %}Edit Category{% else %}Add Category{% endif %} | Campus Coin{% endblock %}
+{% block page_name %}Category Management{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><span class="admin-section-kicker">CATEGORY</span><h1>{% if object %}Edit Category{% else %}Add New Category{% endif %}</h1><p>Categories are shared across transactions, AI classification, and reports.</p></div></div>
+<section class="admin-card admin-form-card"><form method="post" class="admin-form">{% csrf_token %}{{ form.as_p }}<div class="admin-actions"><button class="btn primary" type="submit">Save category</button><a class="btn" href="{% url 'transactions:admin-category-list' %}">Cancel</a></div></form></section>
+{% endblock %}
