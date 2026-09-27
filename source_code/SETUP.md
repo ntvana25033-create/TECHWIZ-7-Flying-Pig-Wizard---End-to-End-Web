@@ -25,7 +25,7 @@ pip install -r requirements.txt
 
 ## 3. Configure the environment
 
-Copy `.env.example` to `.env`, then update the MySQL settings.
+Edit `env.txt` for non-secret local settings. For real passwords/API keys, use host environment variables or create a local `.env` file; `.env` is gitignored and overrides `env.txt`.
 
 You can quickly run the project with SQLite for testing by setting:
 

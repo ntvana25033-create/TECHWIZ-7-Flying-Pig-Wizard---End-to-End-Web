@@ -2,5 +2,27 @@
 {% block title %}Delete Category | Campus Coin{% endblock %}
 {% block page_name %}Category Management{% endblock %}
 {% block content %}
-<section class="admin-card admin-form-card"><span class="admin-section-kicker">CONFIRMATION</span><h1>Delete this category?</h1><p>This will permanently delete <strong>{{ object.name }}</strong> ({{ object.get_type_display }}). Existing transactions using it will keep the transaction but their category may become empty because the relation uses SET_NULL.</p><div class="admin-actions"><form method="post">{% csrf_token %}<button class="btn danger" type="submit">Delete category</button></form><a class="btn" href="{% url 'transactions:admin-category-list' %}">Cancel</a></div></section>
+<section class="admin-card admin-form-card">
+    <span class="admin-section-kicker">CONFIRMATION</span>
+    <h1>Delete this category?</h1>
+    <p><strong>{{ object.name }}</strong> ({{ object.get_type_display }}) can only be deleted when it is not referenced by any transaction, AI training record, or CSV import row.</p>
+
+    {% if category_usage_total %}
+        <p>This category is currently in use and cannot be deleted.</p>
+        <ul>
+            {% for label, count in category_usage.items %}
+                {% if count %}<li>{{ label }}: <strong>{{ count }}</strong></li>{% endif %}
+            {% endfor %}
+        </ul>
+        <div class="admin-actions">
+            <a class="btn" href="{% url 'transactions:admin-category-list' %}">Back to categories</a>
+        </div>
+    {% else %}
+        <p>No other record references this category. Deleting it is safe.</p>
+        <div class="admin-actions">
+            <form method="post">{% csrf_token %}<button class="btn danger" type="submit">Delete category</button></form>
+            <a class="btn" href="{% url 'transactions:admin-category-list' %}">Cancel</a>
+        </div>
+    {% endif %}
+</section>
 {% endblock %}

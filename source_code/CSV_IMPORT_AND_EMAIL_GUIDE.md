@@ -34,7 +34,7 @@ income,,1500000,Part-time job payment,2026-09-24
 
 ## Password reset email with Gmail
 
-Campus Coin already includes password reset. Configure SMTP in `.env`.
+Campus Coin already includes password reset. For a private local setup, configure SMTP in a gitignored `.env` file (it overrides the public `env.txt`).
 
 ```env
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend

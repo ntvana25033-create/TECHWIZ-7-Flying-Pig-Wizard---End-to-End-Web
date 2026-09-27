@@ -1,0 +1,24 @@
+Campus Coin - Update Notes
+==========================
+
+1. Category delete protection
+- Every ForeignKey that points to transactions.Category now uses PROTECT.
+- A Category cannot be deleted while it is referenced by a transaction, AI training example, or CSV import row.
+- The admin category list shows "In use - cannot delete" instead of a delete link for referenced categories.
+- A new migration was added: transactions/migrations/0004_protect_category_references.py
+- Run: python manage.py migrate
+
+2. GitHub-safe configuration
+- The old .env file was removed from the package.
+- env.txt contains safe public/local defaults and no real SMTP password.
+- config/settings.py loads env.txt first, then an optional private .env file as an override.
+- Keep real passwords/API keys in host environment variables or a local .env file. .env remains gitignored.
+
+3. Finance assistant UI
+- Free-text input was removed from both the full assistant page and the floating widget.
+- Users can only click the preset question buttons shown by the interface.
+- Existing calculation/assistant services are retained behind those preset actions.
+
+4. GitHub package cleanup
+- The GitHub-ready ZIP excludes the local .venv, .idea metadata, __pycache__, .pyc files, and db.sqlite3.
+- Recreate the virtual environment and install dependencies with requirements.txt.

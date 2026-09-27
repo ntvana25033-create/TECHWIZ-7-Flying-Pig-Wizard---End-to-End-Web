@@ -91,6 +91,59 @@ class TransactionPermissionTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class CategoryDeleteProtectionTests(TestCase):
+    def setUp(self):
+        admin_role, _ = Role.objects.get_or_create(role_name=Role.Name.ADMIN)
+        student_role, _ = Role.objects.get_or_create(role_name=Role.Name.STUDENT)
+        self.admin = User.objects.create_user(
+            email="category-admin@example.com",
+            password="AdminTest123!",
+            role=admin_role,
+        )
+        self.student = User.objects.create_user(
+            email="category-student@example.com",
+            password="StudentTest123!",
+            role=student_role,
+        )
+        self.client.force_login(self.admin)
+
+    def test_referenced_category_cannot_be_deleted(self):
+        category = Category.objects.create(name="Protected Food", type="expense")
+        Transaction.objects.create(
+            user=self.student,
+            category=category,
+            amount=10000,
+            type="expense",
+            description="Lunch",
+            date=date.today(),
+        )
+
+        response = self.client.post(
+            reverse("transactions:admin-category-delete", args=[category.pk])
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("transactions:admin-category-list"),
+            fetch_redirect_response=False,
+        )
+        self.assertTrue(Category.objects.filter(pk=category.pk).exists())
+
+    def test_unreferenced_category_can_be_deleted(self):
+        category = Category.objects.create(name="Unused Category", type="expense")
+
+        response = self.client.post(
+            reverse("transactions:admin-category-delete", args=[category.pk])
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("transactions:admin-category-list"),
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(Category.objects.filter(pk=category.pk).exists())
+
+
 class TransactionAIFeedbackTests(TestCase):
     def setUp(self):
         self.student_role, _ = Role.objects.get_or_create(role_name=Role.Name.STUDENT)

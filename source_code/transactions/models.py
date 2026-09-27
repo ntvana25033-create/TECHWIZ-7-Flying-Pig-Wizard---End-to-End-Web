@@ -14,11 +14,31 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def reference_counts(self):
+        """Return every database reference that prevents this category from being deleted."""
+        return {
+            "transactions": self.transaction_set.count(),
+            "ai suggested transactions": self.ai_suggested_transactions.count(),
+            "AI training examples": self.ai_training_examples.count(),
+            "CSV import rows": self.csv_import_rows.count(),
+            "AI suggested CSV rows": self.ai_suggested_import_rows.count(),
+        }
+
+    @property
+    def is_in_use(self):
+        return (
+            self.transaction_set.exists()
+            or self.ai_suggested_transactions.exists()
+            or self.ai_training_examples.exists()
+            or self.csv_import_rows.exists()
+            or self.ai_suggested_import_rows.exists()
+        )
+
 
 class AITrainingExample(models.Model):
     text = models.TextField(verbose_name="Training text")
     category = models.ForeignKey(
-        Category, on_delete=models.CASCADE,
+        Category, on_delete=models.PROTECT,
         related_name="ai_training_examples", verbose_name="Training category"
     )
     source = models.CharField(max_length=30, default="excel", verbose_name="Data source")
@@ -39,14 +59,14 @@ class Transaction(models.Model):
     )
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, verbose_name="User")
-    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, verbose_name="Category")
+    category = models.ForeignKey(Category, on_delete=models.PROTECT, null=True, verbose_name="Category")
     amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name="Amount")
     type = models.CharField(max_length=10, choices=TYPE_CHOICES, verbose_name="Transaction type")
     description = models.TextField(blank=True, null=True, verbose_name="Description")
 
     ai_suggested_category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         null=True,
         blank=True,
         related_name='ai_suggested_transactions',
@@ -96,7 +116,7 @@ class TransactionImportRow(models.Model):
     type = models.CharField(max_length=10, blank=True)
     category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         blank=True,
         null=True,
         related_name="csv_import_rows",
@@ -106,7 +126,7 @@ class TransactionImportRow(models.Model):
     date = models.DateField(blank=True, null=True)
     ai_suggested_category = models.ForeignKey(
         Category,
-        on_delete=models.SET_NULL,
+        on_delete=models.PROTECT,
         blank=True,
         null=True,
         related_name="ai_suggested_import_rows",

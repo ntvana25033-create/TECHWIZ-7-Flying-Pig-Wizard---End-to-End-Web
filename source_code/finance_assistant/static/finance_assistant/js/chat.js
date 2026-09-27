@@ -131,6 +131,7 @@
             this.form = root.querySelector("[data-chat-form]");
             this.textarea = this.form ? this.form.querySelector("textarea") : null;
             this.submit = this.form ? this.form.querySelector('button[type="submit"]') : null;
+            this.promptButtons = Array.from(root.querySelectorAll("[data-prompt]"));
             this.loaded = !this.widgetMode;
             this.bind();
             this.renderExisting();
@@ -196,6 +197,7 @@
         setBusy(busy) {
             if (this.submit) this.submit.disabled = busy;
             if (this.textarea) this.textarea.disabled = busy;
+            this.promptButtons.forEach((button) => { button.disabled = busy; });
         }
 
         async send(rawText) {
@@ -293,7 +295,6 @@
                 panel.hidden = false;
                 launcher.setAttribute("aria-expanded", "true");
                 chat.bootstrap();
-                setTimeout(() => chat.textarea && chat.textarea.focus(), 50);
             }
             function closePanel() {
                 panel.hidden = true;

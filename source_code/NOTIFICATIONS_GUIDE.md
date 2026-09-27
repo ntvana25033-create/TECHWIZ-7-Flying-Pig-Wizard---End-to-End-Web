@@ -80,7 +80,7 @@ py manage.py process_notifications --date 2026-09-30
 
 ## Email configuration
 
-The notification app uses the same SMTP settings as password reset. Configure `.env`:
+The notification app uses the same SMTP settings as password reset. Configure a private, gitignored `.env` file (it overrides `env.txt`):
 
 ```env
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend

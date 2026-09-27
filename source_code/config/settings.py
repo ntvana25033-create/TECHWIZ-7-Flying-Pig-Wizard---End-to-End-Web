@@ -4,7 +4,11 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-load_dotenv(BASE_DIR / ".env")
+
+# env.txt is a GitHub-safe development template. A local .env (gitignored) can
+# override it for private credentials without committing secrets.
+load_dotenv(BASE_DIR / "env.txt")
+load_dotenv(BASE_DIR / ".env", override=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-campus-coin-development-key")
 DEBUG = os.getenv("DEBUG", "True").lower() in {"1", "true", "yes", "on"}

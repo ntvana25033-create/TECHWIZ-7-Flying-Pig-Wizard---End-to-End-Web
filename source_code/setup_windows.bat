@@ -37,5 +37,5 @@ exit /b 0
 
 :error
 echo.
-echo An error occurred during setup. Check .env and the error message above.
+echo An error occurred during setup. Check env.txt / private .env and the error message above.
 exit /b 1

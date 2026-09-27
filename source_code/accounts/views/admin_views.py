@@ -199,7 +199,7 @@ def admin_user_send_reset_view(request, user_id):
     if send_password_reset_email(request, target):
         messages.success(request, "Password reset link created and sent")
     else:
-        messages.error(request, "Unable to send the reset email. Check the EMAIL configuration in .env")
+        messages.error(request, "Unable to send the reset email. Check the EMAIL configuration in the private .env or host environment variables")
     return redirect("accounts:admin_user_detail", user_id=user_id)
 
 

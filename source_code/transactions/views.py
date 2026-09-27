@@ -5,6 +5,7 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.db import transaction as db_transaction
+from django.db.models.deletion import ProtectedError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
@@ -59,6 +60,39 @@ class AdminCategoryDeleteView(AdminRequiredMixin, DeleteView):
     model = Category
     template_name = "transaction/admin_category_confirm_delete.html"
     success_url = reverse_lazy("transactions:admin-category-list")
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        usage = self.object.reference_counts()
+        context["category_usage"] = usage
+        context["category_usage_total"] = sum(usage.values())
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        usage = self.object.reference_counts()
+        usage_total = sum(usage.values())
+        if usage_total:
+            details = ", ".join(
+                f"{label}: {count}" for label, count in usage.items() if count
+            )
+            messages.error(
+                request,
+                f"Category '{self.object.name}' cannot be deleted because it is still in use ({details}).",
+            )
+            return redirect(self.success_url)
+
+        category_name = self.object.name
+        try:
+            self.object.delete()
+        except ProtectedError:
+            messages.error(
+                request,
+                f"Category '{category_name}' cannot be deleted because another record is using it.",
+            )
+        else:
+            messages.success(request, f"Category '{category_name}' was deleted.")
+        return redirect(self.success_url)
 
 
 class AdminTransactionListView(AdminRequiredMixin, ListView):

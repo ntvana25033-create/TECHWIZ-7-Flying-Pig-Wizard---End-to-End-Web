@@ -12,7 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         recipient = options["recipient"]
         if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_PASSWORD:
-            raise CommandError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not configured in .env")
+            raise CommandError("EMAIL_HOST_USER or EMAIL_HOST_PASSWORD is not configured in the private .env or host environment variables")
 
         sent = send_mail(
             "Campus Coin - SMTP Test",
