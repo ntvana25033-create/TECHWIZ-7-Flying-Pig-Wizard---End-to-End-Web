@@ -10,5 +10,6 @@ urlpatterns = [
     path("<int:session_id>/delete/", views.DeleteChatView.as_view(), name="delete-chat"),
     path("api/chat/", views.ChatAPIView.as_view(), name="api-chat"),
     path("api/bootstrap/", views.WidgetBootstrapAPIView.as_view(), name="api-bootstrap"),
-    path("api/messages/<int:message_id>/rating/", views.MessageRatingAPIView.as_view(), name="api-rating"),
+    path("api/messages/<int:me"
+         "ssage_id>/rating/", views.MessageRatingAPIView.as_view(), name="api-rating"),
 ]
