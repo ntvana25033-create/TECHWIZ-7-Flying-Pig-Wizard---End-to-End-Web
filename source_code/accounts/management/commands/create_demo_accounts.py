@@ -35,8 +35,9 @@ class Command(BaseCommand):
             )
         student.profile.full_name = "Demo Student"
         student.profile.academic_year = "Year 2"
-        student.profile.monthly_allowance = 5000000
-        student.profile.monthly_savings_goal = 1000000
+        student.profile.monthly_allowance = 200
+        student.profile.monthly_savings_goal = 40
+        student.profile.currency_code = "USD"
         student.profile.save()
 
         self.stdout.write(self.style.SUCCESS("Demo accounts created or verified"))

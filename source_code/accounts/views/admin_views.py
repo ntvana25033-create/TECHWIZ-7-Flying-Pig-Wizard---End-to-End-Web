@@ -10,7 +10,6 @@ from accounts.forms import (
     AdminProfileForm,
     AdminUserCreateForm,
     AdminUserEditForm,
-    ForgotPasswordForm,
     LoginForm,
 )
 from accounts.models import Role, User, UserSession
@@ -30,6 +29,7 @@ def admin_login_view(request):
         return redirect("transactions:transaction-list")
 
     form = LoginForm(request, request.POST or None)
+    form.fields["email"].widget.attrs["placeholder"] = "admin@example.com"
     if request.method == "POST" and form.is_valid():
         user = form.get_user()
         if user.role.role_name != Role.Name.ADMIN:
@@ -43,36 +43,6 @@ def admin_login_view(request):
     return render(
         request,
         "accounts/admin/login.html",
-        {"form": form, "admin_portal": True},
-    )
-
-
-def admin_forgot_password_view(request):
-    if request.user.is_authenticated:
-        if request.user.role.role_name == Role.Name.ADMIN:
-            return redirect("accounts:admin_dashboard")
-        return redirect("transactions:transaction-list")
-
-    form = ForgotPasswordForm(request.POST or None)
-    if request.method == "POST" and form.is_valid():
-        email = form.cleaned_data["email"].strip().lower()
-        user = User.objects.filter(
-            email__iexact=email,
-            role__role_name=Role.Name.ADMIN,
-            status__in=[User.Status.ACTIVE, User.Status.LOCKED],
-            deleted_at__isnull=True,
-        ).first()
-        if user:
-            send_password_reset_email(request, user)
-        messages.success(
-            request,
-            "If the administrator email exists in the system, a password reset link has been sent",
-        )
-        return redirect("accounts:admin_forgot_password")
-
-    return render(
-        request,
-        "accounts/admin/forgot_password.html",
         {"form": form, "admin_portal": True},
     )
 

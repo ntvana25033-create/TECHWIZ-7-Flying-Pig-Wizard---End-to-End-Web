@@ -13,10 +13,10 @@ class RegisterForm(FormStyleMixin, forms.Form):
     email = forms.EmailField(label="Email")
     academic_year = forms.CharField(label="Academic year", max_length=50, required=False)
     monthly_allowance = forms.DecimalField(
-        label="Monthly allowance", max_digits=15, decimal_places=2, min_value=0, required=False
+        label="Monthly allowance (USD)", max_digits=15, decimal_places=2, min_value=0, required=False
     )
     monthly_savings_goal = forms.DecimalField(
-        label="Savings goal", max_digits=15, decimal_places=2, min_value=0, required=False
+        label="Savings goal (USD)", max_digits=15, decimal_places=2, min_value=0, required=False
     )
     password1 = forms.CharField(label="Password", widget=forms.PasswordInput)
     password2 = forms.CharField(label="Confirm password", widget=forms.PasswordInput)
@@ -30,8 +30,8 @@ class RegisterForm(FormStyleMixin, forms.Form):
         self.fields["full_name"].widget.attrs.update({"placeholder": "John Doe", "autocomplete": "name"})
         self.fields["email"].widget.attrs.update({"placeholder": "student@example.com", "autocomplete": "email"})
         self.fields["academic_year"].widget.attrs.update({"placeholder": "Example: Year 3"})
-        self.fields["monthly_allowance"].widget.attrs.update({"placeholder": "3000000", "inputmode": "decimal"})
-        self.fields["monthly_savings_goal"].widget.attrs.update({"placeholder": "500000", "inputmode": "decimal"})
+        self.fields["monthly_allowance"].widget.attrs.update({"placeholder": "300.00", "inputmode": "decimal"})
+        self.fields["monthly_savings_goal"].widget.attrs.update({"placeholder": "100.00", "inputmode": "decimal"})
         self.fields["password1"].widget.attrs.update({"autocomplete": "new-password", "data-password": "main"})
         self.fields["password2"].widget.attrs.update({"autocomplete": "new-password"})
 

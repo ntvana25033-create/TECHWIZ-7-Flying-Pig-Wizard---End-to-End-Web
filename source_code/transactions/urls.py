@@ -6,6 +6,7 @@ app_name = 'transactions'
 urlpatterns = [
     path('categories/', views.CategoryListView.as_view(), name='category-list'),
     path('transactions/', views.TransactionListView.as_view(), name='transaction-list'),
+    path('transactions/', views.TransactionListView.as_view(), name='list'),
     path('transactions/new/', views.TransactionCreateView.as_view(), name='transaction-create'),
     path('transactions/<int:pk>/edit/', views.TransactionUpdateView.as_view(), name='transaction-update'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction-delete'),

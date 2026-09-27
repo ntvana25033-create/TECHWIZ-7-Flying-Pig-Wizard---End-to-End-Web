@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ('monthly_allowance', models.DecimalField(decimal_places=2, default=0, max_digits=15)),
                 ('monthly_savings_goal', models.DecimalField(decimal_places=2, default=0, max_digits=15)),
                 ('avatar_path', models.ImageField(blank=True, max_length=500, null=True, upload_to='avatars/%Y/%m/')),
-                ('currency_code', models.CharField(default='VND', max_length=3)),
+                ('currency_code', models.CharField(default='USD', max_length=3)),
                 ('timezone', models.CharField(default='Asia/Ho_Chi_Minh', max_length=64)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),

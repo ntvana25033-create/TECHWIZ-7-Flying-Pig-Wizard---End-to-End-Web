@@ -22,7 +22,6 @@ urlpatterns = [
 
     # Admin portal
     path("admin-account/login/", admin_views.admin_login_view, name="admin_login"),
-    path("admin-account/forgot-password/", admin_views.admin_forgot_password_view, name="admin_forgot_password"),
     path("admin-account/logout/", admin_views.admin_logout_view, name="admin_logout"),
     path("admin-account/", admin_views.admin_dashboard_view, name="admin_dashboard"),
     path("admin-account/profile/", admin_views.admin_profile_view, name="admin_profile"),

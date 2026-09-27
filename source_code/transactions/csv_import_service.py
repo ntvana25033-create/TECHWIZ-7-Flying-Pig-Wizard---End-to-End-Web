@@ -15,14 +15,9 @@ CSV_HEADERS = ["type", "category", "amount", "description", "date"]
 
 TYPE_ALIASES = {
     "income": "income",
-    "thu": "income",
-    "thu nhap": "income",
-    "thu nhập": "income",
     "expense": "expense",
-    "chi": "expense",
-    "chi tieu": "expense",
-    "chi tiêu": "expense",
 }
+
 
 DATE_FORMATS = ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y")
 
@@ -38,9 +33,9 @@ def parse_amount(value):
         return None
 
     cleaned = (
-        raw.replace("VND", "")
-        .replace("vnd", "")
-        .replace("₫", "")
+        raw.replace("USD", "")
+        .replace("usd", "")
+        .replace("$", "")
         .replace(" ", "")
     )
 
@@ -80,14 +75,14 @@ def parse_date(value):
 def decode_csv(uploaded_file):
     raw = uploaded_file.read()
     if not raw:
-        raise ValueError("File CSV đang trống.")
+        raise ValueError("The CSV file is empty.")
 
     for encoding in ("utf-8-sig", "utf-8"):
         try:
             return raw.decode(encoding)
         except UnicodeDecodeError:
             continue
-    raise ValueError("CSV phải dùng mã hóa UTF-8.")
+    raise ValueError("The CSV file must use UTF-8 encoding.")
 
 
 def read_csv_rows(uploaded_file):
@@ -95,20 +90,20 @@ def read_csv_rows(uploaded_file):
     stream = io.StringIO(text, newline="")
     reader = csv.DictReader(stream)
     if not reader.fieldnames:
-        raise ValueError("Không tìm thấy dòng tiêu đề trong CSV.")
+        raise ValueError("Could not find a header row in the CSV file.")
 
     normalized_headers = [str(name or "").strip().lower() for name in reader.fieldnames]
     reader.fieldnames = normalized_headers
     missing = REQUIRED_HEADERS - set(normalized_headers)
     if missing:
         raise ValueError(
-            "CSV thiếu cột bắt buộc: " + ", ".join(sorted(missing)) + "."
+            "CSV is missing required columns: " + ", ".join(sorted(missing)) + "."
         )
 
     unsupported = set(normalized_headers) - REQUIRED_HEADERS - OPTIONAL_HEADERS
     if unsupported:
         raise ValueError(
-            "CSV có cột không được hỗ trợ: " + ", ".join(sorted(unsupported)) + "."
+            "CSV contains unsupported columns: " + ", ".join(sorted(unsupported)) + "."
         )
 
     rows = []
@@ -117,10 +112,10 @@ def read_csv_rows(uploaded_file):
             continue
         rows.append((row_number, {key: (value or "").strip() for key, value in source_row.items()}))
         if len(rows) > MAX_IMPORT_ROWS:
-            raise ValueError(f"Mỗi lần chỉ được import tối đa {MAX_IMPORT_ROWS} giao dịch.")
+            raise ValueError(f"You can import at most {MAX_IMPORT_ROWS} transactions per batch.")
 
     if not rows:
-        raise ValueError("CSV không có dòng dữ liệu nào.")
+        raise ValueError("The CSV file does not contain any data rows.")
     return rows
 
 
@@ -139,15 +134,15 @@ def build_import_row(batch, row_number, source_row, categories=None):
 
     transaction_type = normalize_type(source_row.get("type"))
     if not transaction_type:
-        errors.append("Type phải là income/expense (hoặc thu/chi).")
+        errors.append("Type must be income or expense.")
 
     amount = parse_amount(source_row.get("amount"))
     if amount is None:
-        errors.append("Amount không hợp lệ hoặc phải lớn hơn 0.")
+        errors.append("Amount is invalid or must be greater than 0.")
 
     transaction_date = parse_date(source_row.get("date"))
     if transaction_date is None:
-        errors.append("Date không hợp lệ. Dùng YYYY-MM-DD hoặc DD/MM/YYYY.")
+        errors.append("Date is invalid. Use YYYY-MM-DD or DD/MM/YYYY.")
 
     description = (source_row.get("description") or "").strip()
     category_text = " ".join((source_row.get("category") or "").strip().lower().split())
@@ -156,7 +151,7 @@ def build_import_row(batch, row_number, source_row, categories=None):
     if transaction_type and category_text:
         selected_category = categories.get((transaction_type, category_text))
         if not selected_category:
-            notes.append("Category trong CSV không khớp hệ thống; AI sẽ thử gợi ý lại.")
+            notes.append("The CSV category does not match the system; AI will try to suggest another category.")
 
     prediction = None
     if transaction_type and description:
@@ -172,10 +167,10 @@ def build_import_row(batch, row_number, source_row, categories=None):
 
     if selected_category is None and predicted_category is not None:
         selected_category = predicted_category
-        notes.append("Category được AI tự động điền; hãy kiểm tra trước khi xác nhận.")
+        notes.append("Category was filled by AI; review it before confirming.")
 
     if selected_category is None:
-        errors.append("Chưa xác định được Category. Hãy chọn Category ở bảng xem trước.")
+        errors.append("No category could be determined. Select a category in the staging table.")
 
     return TransactionImportRow(
         batch=batch,
@@ -197,22 +192,22 @@ def validate_edited_row(*, transaction_type, category, amount_text, description,
     errors = []
     normalized_type = normalize_type(transaction_type)
     if not normalized_type:
-        errors.append("Type không hợp lệ.")
+        errors.append("Type is invalid.")
 
     amount = parse_amount(amount_text)
     if amount is None:
-        errors.append("Amount không hợp lệ hoặc phải lớn hơn 0.")
+        errors.append("Amount is invalid or must be greater than 0.")
 
     transaction_date = parse_date(date_text)
     if transaction_date is None:
-        errors.append("Date không hợp lệ.")
+        errors.append("Date is invalid.")
 
     description = (description or "").strip()
 
     if category is None:
-        errors.append("Bạn phải chọn Category.")
+        errors.append("You must select a category.")
     elif normalized_type and category.type != normalized_type:
-        errors.append("Category không thuộc Type đã chọn.")
+        errors.append("The category does not belong to the selected transaction type.")
 
     prediction = None
     if normalized_type and description:

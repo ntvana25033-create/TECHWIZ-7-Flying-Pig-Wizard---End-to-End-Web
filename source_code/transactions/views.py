@@ -1,4 +1,5 @@
 import csv
+import logging
 from collections import Counter
 from decimal import Decimal
 
@@ -12,6 +13,7 @@ from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
 from accounts.models import Role
+from notifications.services import create_threshold_notifications
 
 from .ai_service import classifier
 from .csv_import_service import (
@@ -23,6 +25,8 @@ from .csv_import_service import (
 )
 from .forms import CSVTransactionImportForm, TransactionForm
 from .mixins import AdminRequiredMixin, StudentRequiredMixin
+logger = logging.getLogger(__name__)
+
 from .models import (
     Category,
     Transaction,
@@ -89,6 +93,13 @@ class TransactionListView(StudentRequiredMixin, ListView):
         )
 
 
+def _refresh_spending_notifications(user):
+    try:
+        create_threshold_notifications(user)
+    except Exception:
+        logger.exception("Could not refresh spending notifications for user %s", user.pk)
+
+
 def _apply_ai_feedback(form, request, learn=True):
     description = (form.cleaned_data.get("description") or "").strip()
     selected_category = form.cleaned_data.get("category")
@@ -108,17 +119,17 @@ def _apply_ai_feedback(form, request, learn=True):
         form.instance.ai_feedback_at = timezone.now()
 
         if prediction and form.instance.ai_prediction_correct:
-            messages.success(request, f"AI dự đoán đúng: {selected_category.name}.")
+            messages.success(request, f"AI prediction confirmed: {selected_category.name}.")
         elif prediction:
             messages.info(
                 request,
-                f"Đã ghi nhận phản hồi: AI đoán ‘{prediction['category_name']}’, "
-                f"bạn chọn ‘{selected_category.name}’. AI đã học dữ liệu mới.",
+                f"Feedback saved: the AI suggested ‘{prediction['category_name']}’, "
+                f"you selected ‘{selected_category.name}’. The AI learned from the final choice.",
             )
         else:
             messages.success(
                 request,
-                f"Đã ghi nhận ‘{selected_category.name}’ làm dữ liệu mới để AI học.",
+                f"Saved ‘{selected_category.name}’ as new training feedback for the AI.",
             )
 
 
@@ -131,7 +142,9 @@ class TransactionCreateView(StudentRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.user = self.request.user
         _apply_ai_feedback(form, self.request)
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        _refresh_spending_notifications(self.request.user)
+        return response
 
 
 class TransactionUpdateView(StudentRequiredMixin, UpdateView):
@@ -144,7 +157,9 @@ class TransactionUpdateView(StudentRequiredMixin, UpdateView):
         ai_relevant_fields = {"description", "category", "type"}
         should_learn = bool(ai_relevant_fields.intersection(form.changed_data))
         _apply_ai_feedback(form, self.request, learn=should_learn)
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        _refresh_spending_notifications(self.request.user)
+        return response
 
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user)
@@ -192,12 +207,12 @@ class TransactionCSVImportView(StudentRequiredMixin, View):
         if invalid_count:
             messages.warning(
                 request,
-                f"Đã đọc {len(import_rows)} dòng. Có {invalid_count} dòng cần kiểm tra/sửa trước khi xác nhận.",
+                f"Read {len(import_rows)} row(s). {invalid_count} row(s) need review before confirmation.",
             )
         else:
             messages.success(
                 request,
-                f"AI đã phân loại {len(import_rows)} giao dịch. Hãy kiểm tra lại trước khi xác nhận.",
+                f"AI classified {len(import_rows)} transaction(s). Review the staging table before confirmation.",
             )
         return redirect("transactions:csv-import-preview", batch_id=batch.pk)
 
@@ -209,8 +224,8 @@ class TransactionCSVTemplateView(StudentRequiredMixin, View):
         response.write("\ufeff")
         writer = csv.writer(response)
         writer.writerow(CSV_HEADERS)
-        writer.writerow(["expense", "", "45000", "Mua cơm trưa", "2026-09-25"])
-        writer.writerow(["income", "", "1500000", "Nhận lương làm thêm", "2026-09-24"])
+        writer.writerow(["expense", "", "45000", "Lunch at cafeteria", "2026-09-25"])
+        writer.writerow(["income", "", "1500000", "Part-time job payment", "2026-09-24"])
         return response
 
 
@@ -243,7 +258,7 @@ class TransactionCSVImportPreviewView(StudentRequiredMixin, View):
     def get(self, request, batch_id):
         batch = _student_batch_or_404(request, batch_id)
         if batch.status == TransactionImportBatch.Status.CONFIRMED:
-            messages.info(request, "Lô CSV này đã được xác nhận trước đó.")
+            messages.info(request, "This CSV batch has already been confirmed.")
             return redirect("transactions:transaction-list")
         return render(request, self.template_name, self._context(batch))
 
@@ -298,14 +313,14 @@ class TransactionCSVImportPreviewView(StudentRequiredMixin, View):
         batch.save(update_fields=["updated_at"])
         action = request.POST.get("action", "save")
         if any_errors:
-            messages.warning(request, "Đã lưu thay đổi, nhưng vẫn còn dòng chưa hợp lệ.")
+            messages.warning(request, "Changes were saved, but some rows are still invalid.")
             return redirect("transactions:csv-import-preview", batch_id=batch.pk)
 
         if action == "continue":
-            messages.success(request, "Dữ liệu đã hợp lệ. Kiểm tra tóm tắt và xác nhận lần cuối.")
+            messages.success(request, "All rows are valid. Review the summary and confirm the import.")
             return redirect("transactions:csv-import-confirm", batch_id=batch.pk)
 
-        messages.success(request, "Đã lưu các chỉnh sửa trong bảng tạm.")
+        messages.success(request, "Your staging-table edits were saved.")
         return redirect("transactions:csv-import-preview", batch_id=batch.pk)
 
 
@@ -336,7 +351,7 @@ class TransactionCSVImportConfirmView(StudentRequiredMixin, View):
         batch = _student_batch_or_404(request, batch_id, draft_only=True)
         rows = self._rows(batch)
         if any(row.validation_errors for row in rows):
-            messages.warning(request, "Hãy sửa hết các dòng lỗi trước khi xác nhận.")
+            messages.warning(request, "Fix all invalid rows before confirming the import.")
             return redirect("transactions:csv-import-preview", batch_id=batch.pk)
         return render(
             request,
@@ -352,15 +367,15 @@ class TransactionCSVImportConfirmView(StudentRequiredMixin, View):
                 user=request.user,
             )
             if batch.status == TransactionImportBatch.Status.CONFIRMED:
-                messages.info(request, "Lô CSV này đã được nhập trước đó, hệ thống không nhập lại.")
+                messages.info(request, "This CSV batch was already imported and will not be imported again.")
                 return redirect("transactions:transaction-list")
 
             rows = self._rows(batch)
             if not rows:
-                messages.error(request, "Lô CSV không còn dữ liệu để xác nhận.")
+                messages.error(request, "This CSV batch has no rows left to confirm.")
                 return redirect("transactions:csv-import-preview", batch_id=batch.pk)
             if any(row.validation_errors for row in rows):
-                messages.warning(request, "Dữ liệu đã thay đổi và có lỗi. Hãy kiểm tra lại.")
+                messages.warning(request, "The staging data changed and now contains validation errors. Review it again.")
                 return redirect("transactions:csv-import-preview", batch_id=batch.pk)
             if any(
                 not row.type
@@ -372,7 +387,7 @@ class TransactionCSVImportConfirmView(StudentRequiredMixin, View):
                 or row.date is None
                 for row in rows
             ):
-                messages.error(request, "Có dòng thiếu hoặc không hợp lệ. Hãy quay lại bảng xem trước.")
+                messages.error(request, "One or more rows are incomplete or invalid. Return to the staging table.")
                 return redirect("transactions:csv-import-preview", batch_id=batch.pk)
 
             now = timezone.now()
@@ -408,8 +423,9 @@ class TransactionCSVImportConfirmView(StudentRequiredMixin, View):
 
         messages.success(
             request,
-            f"Đã nhập {len(transactions_to_create)} giao dịch vào SQL và bổ sung {learned_count} mẫu mới cho AI.",
+            f"Imported {len(transactions_to_create)} transaction(s) into SQL and added {learned_count} new AI training example(s).",
         )
+        _refresh_spending_notifications(request.user)
         return redirect("transactions:transaction-list")
 
 
@@ -417,7 +433,7 @@ class TransactionCSVImportCancelView(StudentRequiredMixin, View):
     def post(self, request, batch_id):
         batch = _student_batch_or_404(request, batch_id, draft_only=True)
         batch.delete()
-        messages.info(request, "Đã hủy lô CSV. Chưa có Transaction nào được thêm vào hệ thống.")
+        messages.info(request, "The CSV batch was cancelled. No final transactions were added.")
         return redirect("transactions:csv-import")
 
 

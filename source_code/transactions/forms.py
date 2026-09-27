@@ -1,4 +1,5 @@
 from django import forms
+
 from .models import Category, Transaction
 
 
@@ -6,11 +7,12 @@ class TransactionForm(forms.ModelForm):
     class Meta:
         model = Transaction
         fields = ["type", "category", "amount", "description", "date"]
+        labels = {"amount": "Amount (USD)"}
         widgets = {
             "description": forms.Textarea(
                 attrs={
                     "rows": 3,
-                    "placeholder": "Ví dụ: Đổ xăng, mua cơm trưa, nhận lương làm thêm...",
+                    "placeholder": "Example: lunch at cafeteria, fuel, part-time salary...",
                 }
             ),
             "date": forms.DateInput(attrs={"type": "date"}),
@@ -24,7 +26,7 @@ class TransactionForm(forms.ModelForm):
         if category and transaction_type and category.type != transaction_type:
             self.add_error(
                 "category",
-                "Category không phù hợp với loại giao dịch đã chọn.",
+                "The selected category does not match the transaction type.",
             )
 
         return cleaned_data
@@ -33,13 +35,13 @@ class TransactionForm(forms.ModelForm):
 class CSVTransactionImportForm(forms.Form):
     csv_file = forms.FileField(
         label="CSV file",
-        help_text="UTF-8 CSV. Cột hỗ trợ: type, category, amount, description, date.",
+        help_text="UTF-8 CSV. Supported columns: type, category, amount, description, date.",
     )
 
     def clean_csv_file(self):
         uploaded = self.cleaned_data["csv_file"]
         if not uploaded.name.lower().endswith(".csv"):
-            raise forms.ValidationError("Vui lòng chọn file có định dạng .csv.")
+            raise forms.ValidationError("Please select a .csv file.")
         if uploaded.size > 5 * 1024 * 1024:
-            raise forms.ValidationError("File CSV tối đa 5 MB.")
+            raise forms.ValidationError("The CSV file must be 5 MB or smaller.")
         return uploaded

@@ -20,7 +20,7 @@ def home_view(request):
         if request.user.role.role_name == Role.Name.ADMIN:
             return redirect("accounts:admin_dashboard")
         return redirect("transactions:transaction-list")
-    return redirect("accounts:login")
+    return render(request, "home.html")
 
 
 def _safe_next_url(request):

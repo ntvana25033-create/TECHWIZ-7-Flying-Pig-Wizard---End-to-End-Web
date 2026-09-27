@@ -107,7 +107,7 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
     )
-    currency_code = models.CharField(max_length=3, default="VND")
+    currency_code = models.CharField(max_length=3, default="USD")
     timezone = models.CharField(max_length=64, default="Asia/Ho_Chi_Minh")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

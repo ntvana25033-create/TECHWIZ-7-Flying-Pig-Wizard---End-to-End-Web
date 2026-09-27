@@ -178,7 +178,7 @@ class TransactionAIFeedbackTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Category không phù hợp")
+        self.assertContains(response, "The selected category does not match")
         self.assertFalse(
             Transaction.objects.filter(
                 user=self.student,

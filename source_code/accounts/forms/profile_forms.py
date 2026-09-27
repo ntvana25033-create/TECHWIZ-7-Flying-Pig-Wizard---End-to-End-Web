@@ -12,6 +12,10 @@ ALLOWED_AVATAR_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
 
 class ProfileForm(FormStyleMixin, forms.ModelForm):
     email = forms.EmailField(label="Email")
+    currency_code = forms.ChoiceField(
+        label="Currency",
+        choices=(("USD", "USD ($)"),),
+    )
     remove_avatar = forms.BooleanField(label="Remove current profile picture", required=False)
 
     class Meta:
@@ -28,8 +32,8 @@ class ProfileForm(FormStyleMixin, forms.ModelForm):
         labels = {
             "full_name": "Full name",
             "academic_year": "Academic year",
-            "monthly_allowance": "Monthly allowance",
-            "monthly_savings_goal": "Monthly savings goal",
+            "monthly_allowance": "Monthly allowance (USD)",
+            "monthly_savings_goal": "Monthly savings goal (USD)",
             "avatar_path": "Profile picture",
             "currency_code": "Currency",
             "timezone": "Time zone",
@@ -48,6 +52,8 @@ class ProfileForm(FormStyleMixin, forms.ModelForm):
         self.apply_form_style()
         if self.instance and self.instance.user_id:
             self.fields["email"].initial = self.instance.user.email
+        self.initial["currency_code"] = "USD"
+        self.fields["currency_code"].initial = "USD"
         self.fields["avatar_path"].help_text = (
             "Upload a JPG, PNG, WEBP, or GIF image up to 5 MB."
         )
@@ -83,6 +89,7 @@ class ProfileForm(FormStyleMixin, forms.ModelForm):
     def save(self, commit=True):
         profile = super().save(commit=False)
         profile.user.email = self.cleaned_data["email"]
+        profile.currency_code = "USD"
         if self.cleaned_data.get("remove_avatar"):
             if profile.avatar_path:
                 profile.avatar_path.delete(save=False)

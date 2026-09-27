@@ -31,7 +31,13 @@
             <div class="avatar-upload-copy">
                 <h2>Profile picture</h2>
                 <p class="muted">Choose an image to display on your profile and account header.</p>
-                <label class="file-picker" for="{{ form.avatar_path.id_for_label }}">Choose image</label>
+                <div class="avatar-upload-control">
+                    <label class="file-picker" for="{{ form.avatar_path.id_for_label }}">Choose image</label>
+                    <div class="avatar-upload-meta">
+                        <strong>JPG, PNG, WEBP or GIF</strong>
+                        <span id="selectedAvatarName">{% if user.profile.avatar_path %}Current profile picture{% else %}No image selected{% endif %}</span>
+                    </div>
+                </div>
                 {{ form.avatar_path }}
                 {% if form.avatar_path.help_text %}<small class="profile-help">{{ form.avatar_path.help_text }}</small>{% endif %}
                 {% for error in form.avatar_path.errors %}<small class="error">{{ error }}</small>{% endfor %}
@@ -41,7 +47,6 @@
                         <span>{{ form.remove_avatar.label }}</span>
                     </label>
                 {% endif %}
-                <span id="selectedAvatarName" class="selected-file-name">{% if user.profile.avatar_path %}Current image: {{ user.profile.avatar_path.name|cut:'avatars/' }}{% else %}No image selected{% endif %}</span>
             </div>
         </div>
 
@@ -91,4 +96,4 @@
     </form>
 </section>
 {% endblock %}
-{% block extra_js %}<script src="{% static 'accounts/js/profile.js' %}?v=20260925"></script>{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/profile.js' %}?v=20260926-profile-final"></script>{% endblock %}

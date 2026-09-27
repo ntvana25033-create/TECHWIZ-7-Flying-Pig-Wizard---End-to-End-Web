@@ -25,6 +25,8 @@ INSTALLED_APPS = [
     "accounts",
     "transactions",
     'report',
+    'notifications.apps.NotificationsConfig',
+    'finance_assistant.apps.FinanceAssistantConfig',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +52,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "notifications.context_processors.notification_status",
             ],
         },
     },
@@ -143,3 +146,10 @@ else:
     CHANNEL_LAYERS = {
         "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
     }
+
+# Optional AI layer for the finance assistant.
+# Core balance/budget answers still work without an API key.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.6-luna").strip() or "gpt-5.6-luna"
+OPENAI_TIMEOUT = int(os.getenv("OPENAI_TIMEOUT", "20"))
+OPENAI_MAX_OUTPUT_TOKENS = int(os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "500"))

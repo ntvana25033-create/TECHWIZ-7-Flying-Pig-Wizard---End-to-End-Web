@@ -1,6 +1,6 @@
 from django.core import mail
 from django.test import TestCase, override_settings
-from django.urls import reverse
+from django.urls import NoReverseMatch, reverse
 
 from accounts.models import Role, User
 from accounts.services import create_password_reset_token, find_valid_reset_token
@@ -54,17 +54,17 @@ class AccountTests(TestCase):
         self.assertNotIn("_auth_user_id", self.client.session)
 
     def test_student_cannot_open_admin_dashboard(self):
-        self.client.force_login(self.student, backend="apps.accounts.backends.EmailAuthenticationBackend")
+        self.client.force_login(self.student, backend="accounts.backends.EmailAuthenticationBackend")
         response = self.client.get(reverse("accounts:admin_dashboard"))
         self.assertRedirects(response, reverse("accounts:profile"))
 
     def test_admin_cannot_open_student_transactions(self):
-        self.client.force_login(self.admin, backend="apps.accounts.backends.EmailAuthenticationBackend")
+        self.client.force_login(self.admin, backend="accounts.backends.EmailAuthenticationBackend")
         response = self.client.get(reverse("transactions:list"))
         self.assertRedirects(response, reverse("accounts:admin_dashboard"))
 
     def test_admin_dashboard_is_available_to_admin(self):
-        self.client.force_login(self.admin, backend="apps.accounts.backends.EmailAuthenticationBackend")
+        self.client.force_login(self.admin, backend="accounts.backends.EmailAuthenticationBackend")
         response = self.client.get(reverse("accounts:admin_dashboard"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Administration Overview")
@@ -83,11 +83,9 @@ class AccountTests(TestCase):
         self.client.post(reverse("accounts:forgot_password"), {"email": self.admin.email})
         self.assertEqual(len(mail.outbox), 0)
 
-    def test_admin_forgot_password_sends_only_admin_email(self):
-        self.client.post(reverse("accounts:admin_forgot_password"), {"email": self.admin.email})
-        self.assertEqual(len(mail.outbox), 1)
-        mail.outbox.clear()
-        self.client.post(reverse("accounts:admin_forgot_password"), {"email": self.student.email})
+    def test_admin_forgot_password_route_is_removed(self):
+        with self.assertRaises(NoReverseMatch):
+            reverse("accounts:admin_forgot_password")
         self.assertEqual(len(mail.outbox), 0)
 
     def test_reset_token_is_hashed(self):
@@ -97,7 +95,7 @@ class AccountTests(TestCase):
         self.assertEqual(find_valid_reset_token(raw_token).pk, saved.pk)
 
     def test_admin_can_disable_student_and_sessions_are_revoked(self):
-        self.client.force_login(self.admin, backend="apps.accounts.backends.EmailAuthenticationBackend")
+        self.client.force_login(self.admin, backend="accounts.backends.EmailAuthenticationBackend")
         response = self.client.post(
             reverse("accounts:admin_user_toggle_status", args=[self.student.pk])
         )
@@ -109,7 +107,7 @@ class AccountTests(TestCase):
         self.assertEqual(self.student.status, User.Status.DISABLED)
 
     def test_admin_cannot_disable_self(self):
-        self.client.force_login(self.admin, backend="apps.accounts.backends.EmailAuthenticationBackend")
+        self.client.force_login(self.admin, backend="accounts.backends.EmailAuthenticationBackend")
         self.client.post(reverse("accounts:admin_user_toggle_status", args=[self.admin.pk]))
         self.admin.refresh_from_db()
         self.assertEqual(self.admin.status, User.Status.ACTIVE)
