@@ -14,7 +14,7 @@
         <header class="cc-ai-panel-head">
             <div>
                 <strong>Campus Coin AI</strong>
-                <span><i></i> Personal finance assistant</span>
+                <span><i></i> Campus Coin intelligent assistant</span>
             </div>
             <div class="cc-ai-head-actions">
                 <a href="{% url 'finance_assistant:home' %}" title="Open full assistant">↗</a>
@@ -25,20 +25,26 @@
         <div class="cc-ai-messages" data-chat-messages>
             <div class="cc-ai-welcome" data-chat-empty>
                 <span class="cc-ai-orb">AI</span>
-                <strong>Your Campus Coin money coach</strong>
-                <p>I use only your Campus Coin records to answer questions, spot spending risk, protect savings, and suggest what to do next.</p>
+                <strong>Your Campus Coin assistant</strong>
+                <p>Ask about the Campus Coin web app or your finances. I use source-grounded product knowledge plus verified tools for account-specific answers.</p>
             </div>
         </div>
 
         <div class="cc-ai-suggestions" data-chat-suggestions>
             <button type="button" data-prompt="What can you do?">What can you do?</button>
+            <button type="button" data-prompt="How does CSV import work?">How does this web work?</button>
             <button type="button" data-prompt="Analyze my finances and give me smart insights.">Smart insights</button>
             <button type="button" data-prompt="Am I overspending this month?">Spending risk</button>
             <button type="button" data-prompt="Make me a plan for the rest of the month.">Action plan</button>
             <button type="button" data-prompt="Give me personalized saving tips.">Save smarter</button>
         </div>
 
-        <p class="cc-ai-disclaimer"><strong>Preset questions only.</strong> Select one of the buttons above; free-text input is disabled.</p>
-        <p class="cc-ai-disclaimer">Campus Coin finance scope only. No live bank or e-wallet access.</p>
+        <form class="cc-ai-compose" data-chat-form>
+            <textarea rows="1" maxlength="4000" placeholder="Ask about Campus Coin or your finances…" aria-label="Message Campus Coin AI"></textarea>
+            <button type="submit" aria-label="Send message">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.4 20.4 17.2-8.4L3.4 3.6 3 10l11 2-11 2 .4 6.4Z"/></svg>
+            </button>
+        </form>
+        <p class="cc-ai-disclaimer">Campus Coin app + finance scope. No live bank or e-wallet access.</p>
     </section>
 </div>

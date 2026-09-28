@@ -14,6 +14,10 @@ from django.utils import timezone
 
 from accounts.models import UserProfile
 from transactions.models import Category, Transaction
+from notifications.models import Notification
+
+from .llm import GroqFinanceAgent, GroqIntentRouter
+from .site_knowledge import search_site_knowledge
 
 
 ZERO = Decimal("0")
@@ -2080,6 +2084,513 @@ class DeterministicFinanceAssistant:
         return None
 
 
+class FinanceToolbox:
+    """Local deterministic tools exposed to the LLM agent.
+
+    User-language understanding lives in the LLM. These functions only retrieve
+    Campus Coin data and perform trusted calculations.
+    """
+
+    def __init__(self, context_service: FinanceContextService):
+        self.context_service = context_service
+        self._handlers = {
+            "get_financial_snapshot": self._get_financial_snapshot,
+            "get_recent_transactions": self._get_recent_transactions,
+            "get_category_spending": self._get_category_spending,
+            "check_purchase_affordability": self._check_purchase_affordability,
+            "get_spending_period": self._get_spending_period,
+            "search_transactions": self._search_transactions,
+            "search_campus_coin_guide": self._search_campus_coin_guide,
+            "get_user_profile_context": self._get_user_profile_context,
+            "list_categories": self._list_categories,
+            "get_notifications": self._get_notifications,
+            "get_financial_report": self._get_financial_report,
+        }
+
+    def execute(self, user, name: str, arguments: dict) -> dict:
+        handler = self._handlers.get(name)
+        if handler is None:
+            return {
+                "ok": False,
+                "tool": name,
+                "error": "Unknown Campus Coin tool.",
+                "data_sources": [],
+            }
+        return handler(user, arguments or {})
+
+    @staticmethod
+    def _tx_dict(tx, currency: str) -> dict:
+        return {
+            "date": tx.date.isoformat(),
+            "type": tx.type,
+            "category": tx.category.name if tx.category else "Uncategorized",
+            "amount": str(_dec(tx.amount).quantize(Decimal("0.01"))),
+            "formatted_amount": format_money(tx.amount, currency),
+            "description": (tx.description or "")[:160],
+        }
+
+    @staticmethod
+    def _risk_metrics(snapshot: FinancialSnapshot) -> dict:
+        reasons = []
+        high = snapshot.remaining_funds <= ZERO or snapshot.projected_remaining < ZERO
+        watch = False
+        if snapshot.remaining_funds <= ZERO:
+            reasons.append("remaining funds are zero or negative")
+        if snapshot.projected_remaining < ZERO:
+            reasons.append("projected month-end remaining funds are negative")
+        if snapshot.savings_goal > ZERO:
+            if snapshot.remaining_funds < snapshot.savings_goal:
+                high = True
+                reasons.append("current remaining funds do not fully protect the savings goal")
+            elif snapshot.projected_remaining < snapshot.savings_goal:
+                watch = True
+                reasons.append("current projection would not fully protect the savings goal")
+        level = "HIGH" if high else "WATCH" if watch else "LOW"
+        return {"level": level, "reasons": reasons}
+
+    def _get_financial_snapshot(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        data = snapshot.as_dict()
+        data["spending_risk"] = self._risk_metrics(snapshot)
+        return {
+            "ok": True,
+            "tool": "get_financial_snapshot",
+            "intent": "summary",
+            "data_sources": [
+                "accounts.UserProfile monthly allowance/savings goal",
+                "transactions.Transaction stored Campus Coin records",
+                "calendar-derived budget/projection metrics",
+            ],
+            "data": data,
+        }
+
+    def _get_recent_transactions(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        try:
+            limit = int(arguments.get("limit", 5))
+        except (TypeError, ValueError):
+            limit = 5
+        limit = max(1, min(limit, 10))
+        tx_type = str(arguments.get("transaction_type", "all") or "all").lower()
+        qs = Transaction.objects.filter(user=user).select_related("category")
+        if tx_type in {"income", "expense"}:
+            qs = qs.filter(type=tx_type)
+        rows = list(qs.order_by("-date", "-created_at", "-id")[:limit])
+        return {
+            "ok": True,
+            "tool": "get_recent_transactions",
+            "intent": "recent_transactions",
+            "data_sources": ["transactions.Transaction date/amount/type/category/description"],
+            "data": {
+                "requested_limit": limit,
+                "returned_count": len(rows),
+                "currency": snapshot.currency,
+                "transactions": [self._tx_dict(tx, snapshot.currency) for tx in rows],
+            },
+        }
+
+    def _get_category_spending(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        raw = str(arguments.get("category", "") or "").strip()
+        if not raw:
+            return {"ok": False, "tool": "get_category_spending", "error": "Category is required."}
+
+        month_start = snapshot.reference_date.replace(day=1)
+        qs = Transaction.objects.filter(
+            user=user,
+            type="expense",
+            date__range=(month_start, snapshot.reference_date),
+        ).select_related("category")
+
+        names = sorted({tx.category.name for tx in qs if tx.category and tx.category.name})
+        normalized = _normalize(raw)
+        chosen = None
+        for name in names:
+            if _normalize(name) == normalized:
+                chosen = name
+                break
+        if chosen is None:
+            contains = [name for name in names if normalized in _normalize(name) or _normalize(name) in normalized]
+            if contains:
+                chosen = contains[0]
+        if chosen is None and names:
+            ranked = sorted(
+                ((_similarity(normalized, _normalize(name)), name) for name in names),
+                reverse=True,
+            )
+            if ranked and ranked[0][0] >= 0.58:
+                chosen = ranked[0][1]
+
+        if chosen is None:
+            return {
+                "ok": True,
+                "tool": "get_category_spending",
+                "intent": "category_spending",
+                "data_sources": ["transactions.Transaction category/amount/type/date"],
+                "data": {
+                    "matched": False,
+                    "requested_category": raw,
+                    "known_expense_categories_this_month": names[:20],
+                    "amount": "0.00",
+                    "currency": snapshot.currency,
+                },
+            }
+
+        matched_qs = qs.filter(category__name=chosen)
+        total = _dec(matched_qs.aggregate(total=Sum("amount"))["total"])
+        return {
+            "ok": True,
+            "tool": "get_category_spending",
+            "intent": "category_spending",
+            "data_sources": ["transactions.Transaction category/amount/type/date"],
+            "data": {
+                "matched": True,
+                "requested_category": raw,
+                "matched_category": chosen,
+                "amount": str(total.quantize(Decimal("0.01"))),
+                "formatted_amount": format_money(total, snapshot.currency),
+                "transaction_count": matched_qs.count(),
+                "currency": snapshot.currency,
+                "period_start": month_start.isoformat(),
+                "period_end": snapshot.reference_date.isoformat(),
+            },
+        }
+
+    def _check_purchase_affordability(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        try:
+            amount = Decimal(str(arguments.get("amount")))
+        except Exception:
+            return {"ok": False, "tool": "check_purchase_affordability", "error": "A valid positive amount is required."}
+        if amount <= ZERO:
+            return {"ok": False, "tool": "check_purchase_affordability", "error": "Amount must be positive."}
+
+        remaining_after = snapshot.remaining_funds - amount
+        safe_after = max(remaining_after - snapshot.savings_goal, ZERO)
+        protects_goal = remaining_after >= snapshot.savings_goal
+        within_remaining = amount <= max(snapshot.remaining_funds, ZERO)
+        within_safe = amount <= snapshot.safe_to_spend_now
+        shortfall_after = max(snapshot.savings_goal - remaining_after, ZERO)
+        return {
+            "ok": True,
+            "tool": "check_purchase_affordability",
+            "intent": "affordability",
+            "data_sources": [
+                "user-provided proposed purchase amount",
+                "accounts.UserProfile monthly allowance/savings goal",
+                "transactions.Transaction stored Campus Coin records",
+            ],
+            "data": {
+                "currency": snapshot.currency,
+                "purchase_amount": str(amount.quantize(Decimal("0.01"))),
+                "formatted_purchase_amount": format_money(amount, snapshot.currency),
+                "current_remaining_funds": str(snapshot.remaining_funds.quantize(Decimal("0.01"))),
+                "current_safe_to_spend": str(snapshot.safe_to_spend_now.quantize(Decimal("0.01"))),
+                "remaining_after_purchase": str(remaining_after.quantize(Decimal("0.01"))),
+                "safe_to_spend_after_purchase": str(safe_after.quantize(Decimal("0.01"))),
+                "savings_goal": str(snapshot.savings_goal.quantize(Decimal("0.01"))),
+                "savings_goal_shortfall_after_purchase": str(shortfall_after.quantize(Decimal("0.01"))),
+                "fits_current_remaining_funds": within_remaining,
+                "preserves_savings_goal": protects_goal,
+                "fits_safe_to_spend_budget": within_safe,
+                "days_remaining_in_month_including_today": snapshot.days_remaining,
+            },
+        }
+
+    def _get_spending_period(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        period = str(arguments.get("period", "this_month") or "this_month")
+        ref = snapshot.reference_date
+        if period == "today":
+            start = end = ref
+            intent = "today_spending"
+        elif period == "last_7_days":
+            start, end = ref - timedelta(days=6), ref
+            intent = "week_spending"
+        elif period == "previous_month":
+            start, end = _previous_month(ref)
+            intent = "compare_month"
+        else:
+            start, end = ref.replace(day=1), ref
+            period = "this_month"
+            intent = "monthly_expense"
+        total = _dec(
+            Transaction.objects.filter(
+                user=user,
+                type="expense",
+                date__range=(start, end),
+            ).aggregate(total=Sum("amount"))["total"]
+        )
+        return {
+            "ok": True,
+            "tool": "get_spending_period",
+            "intent": intent,
+            "data_sources": ["transactions.Transaction amount/type/date"],
+            "data": {
+                "period": period,
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "amount": str(total.quantize(Decimal("0.01"))),
+                "formatted_amount": format_money(total, snapshot.currency),
+                "currency": snapshot.currency,
+            },
+        }
+
+    def _search_transactions(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        qs = Transaction.objects.filter(user=user).select_related("category")
+        tx_type = str(arguments.get("transaction_type", "all") or "all").lower()
+        if tx_type in {"income", "expense"}:
+            qs = qs.filter(type=tx_type)
+
+        errors = []
+        for field, lookup in (("start_date", "date__gte"), ("end_date", "date__lte")):
+            raw = str(arguments.get(field, "") or "").strip()
+            if raw:
+                try:
+                    parsed = date.fromisoformat(raw)
+                    qs = qs.filter(**{lookup: parsed})
+                except ValueError:
+                    errors.append(f"Invalid {field}; use YYYY-MM-DD.")
+
+        category = str(arguments.get("category", "") or "").strip()
+        if category:
+            qs = qs.filter(category__name__icontains=category)
+        description_query = str(arguments.get("description_query", "") or "").strip()
+        if description_query:
+            qs = qs.filter(description__icontains=description_query)
+
+        try:
+            limit = int(arguments.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(limit, 20))
+
+        aggregate = qs.aggregate(total=Sum("amount"))
+        total = _dec(aggregate["total"])
+        count = qs.count()
+        rows = list(qs.order_by("-date", "-created_at", "-id")[:limit])
+        return {
+            "ok": not errors,
+            "tool": "search_transactions",
+            "intent": "recent_transactions",
+            "data_sources": ["transactions.Transaction filtered Campus Coin records"],
+            "warnings": errors,
+            "data": {
+                "matched_count": count,
+                "matched_total": str(total.quantize(Decimal("0.01"))),
+                "formatted_total": format_money(total, snapshot.currency),
+                "currency": snapshot.currency,
+                "transactions": [self._tx_dict(tx, snapshot.currency) for tx in rows],
+            },
+        }
+
+    def _search_campus_coin_guide(self, user, arguments: dict) -> dict:
+        query = str(arguments.get("query", "") or "").strip()
+        if not query:
+            return {"ok": False, "tool": "search_campus_coin_guide", "error": "A Campus Coin help topic is required."}
+        try:
+            limit = int(arguments.get("limit", 5))
+        except (TypeError, ValueError):
+            limit = 5
+        results = search_site_knowledge(query, limit=limit)
+        return {
+            "ok": True,
+            "tool": "search_campus_coin_guide",
+            "intent": "product_help",
+            "data_sources": ["Campus Coin source-grounded product knowledge catalogue"],
+            "data": {
+                "query": query,
+                "results": results,
+                "note": "Answer only from retrieved Campus Coin facts; if the facts do not establish a feature, say so rather than inventing it.",
+            },
+        }
+
+    def _get_user_profile_context(self, user, arguments: dict) -> dict:
+        try:
+            profile = user.profile
+        except UserProfile.DoesNotExist:
+            profile = None
+        role_name = getattr(getattr(user, "role", None), "role_name", "") or ""
+        data = {
+            "display_name": user.get_full_name(),
+            "email": user.email,
+            "role": role_name,
+            "account_status": getattr(user, "status", ""),
+            "profile_exists": profile is not None,
+            "academic_year": getattr(profile, "academic_year", None) if profile else None,
+            "monthly_allowance": str(_dec(getattr(profile, "monthly_allowance", ZERO)).quantize(Decimal("0.01"))),
+            "monthly_savings_goal": str(_dec(getattr(profile, "monthly_savings_goal", ZERO)).quantize(Decimal("0.01"))),
+            "currency": getattr(profile, "currency_code", "USD") if profile else "USD",
+            "timezone": getattr(profile, "timezone", "Asia/Ho_Chi_Minh") if profile else "Asia/Ho_Chi_Minh",
+            "has_profile_picture": bool(getattr(profile, "avatar_path", None)) if profile else False,
+            "profile_path": "/account/profile/",
+            "sessions_path": "/account/sessions/",
+            "change_password_path": "/account/change-password/",
+        }
+        return {
+            "ok": True,
+            "tool": "get_user_profile_context",
+            "intent": "profile",
+            "data_sources": ["accounts.User", "accounts.UserProfile (non-secret fields only)"],
+            "data": data,
+        }
+
+    def _list_categories(self, user, arguments: dict) -> dict:
+        tx_type = str(arguments.get("transaction_type", "all") or "all").lower()
+        qs = Category.objects.all().order_by("type", "name")
+        if tx_type in {"income", "expense"}:
+            qs = qs.filter(type=tx_type)
+        else:
+            tx_type = "all"
+        rows = [{"id": cat.pk, "name": cat.name, "type": cat.type} for cat in qs[:200]]
+        return {
+            "ok": True,
+            "tool": "list_categories",
+            "intent": "categories",
+            "data_sources": ["transactions.Category"],
+            "data": {
+                "filter": tx_type,
+                "count": len(rows),
+                "categories": rows,
+                "student_categories_path": "/transactions/categories/",
+            },
+        }
+
+    def _get_notifications(self, user, arguments: dict) -> dict:
+        status = str(arguments.get("status", "all") or "all").lower()
+        try:
+            limit = int(arguments.get("limit", 10))
+        except (TypeError, ValueError):
+            limit = 10
+        limit = max(1, min(limit, 20))
+        base_qs = Notification.objects.filter(user=user)
+        unread_count = base_qs.filter(is_read=False).count()
+        qs = base_qs
+        if status == "unread":
+            qs = qs.filter(is_read=False)
+        elif status == "read":
+            qs = qs.filter(is_read=True)
+        else:
+            status = "all"
+        rows = [
+            {
+                "id": item.pk,
+                "kind": item.kind,
+                "kind_label": item.get_kind_display(),
+                "severity": item.severity,
+                "title": item.title,
+                "message": item.message,
+                "is_read": item.is_read,
+                "period_start": item.period_start.isoformat() if item.period_start else None,
+                "period_end": item.period_end.isoformat() if item.period_end else None,
+                "income_total": str(_dec(item.income_total).quantize(Decimal("0.01"))),
+                "expense_total": str(_dec(item.expense_total).quantize(Decimal("0.01"))),
+                "balance": str(_dec(item.balance).quantize(Decimal("0.01"))),
+                "savings_goal": str(_dec(item.savings_goal).quantize(Decimal("0.01"))) if item.savings_goal is not None else None,
+                "action_path": item.action_path,
+                "email_sent": bool(item.emailed_at),
+                "email_failed": bool(item.email_error),
+                "created_at": item.created_at.isoformat(),
+            }
+            for item in qs.order_by("-created_at")[:limit]
+        ]
+        return {
+            "ok": True,
+            "tool": "get_notifications",
+            "intent": "notifications",
+            "data_sources": ["notifications.Notification for the signed-in user"],
+            "data": {
+                "status_filter": status,
+                "unread_count": unread_count,
+                "returned_count": len(rows),
+                "notifications": rows,
+                "notifications_path": "/notifications/",
+            },
+        }
+
+    def _get_financial_report(self, user, arguments: dict) -> dict:
+        snapshot = self.context_service.build(user)
+        period = str(arguments.get("period", "month") or "month").lower()
+        if period not in {"day", "week", "month", "3m", "6m"}:
+            period = "month"
+        raw_reference = str(arguments.get("reference_date", "") or "").strip()
+        reference = snapshot.reference_date
+        if raw_reference:
+            try:
+                reference = date.fromisoformat(raw_reference)
+            except ValueError:
+                return {"ok": False, "tool": "get_financial_report", "error": "reference_date must use YYYY-MM-DD."}
+
+        if period == "day":
+            start = end = reference
+        elif period == "week":
+            start, end = reference - timedelta(days=6), reference
+        elif period == "month":
+            start, end = reference.replace(day=1), reference
+        else:
+            months = 3 if period == "3m" else 6
+            start_month = reference.replace(day=1)
+            month_index = start_month.year * 12 + start_month.month - 1 - (months - 1)
+            start, end = date(month_index // 12, month_index % 12 + 1, 1), reference
+
+        qs = Transaction.objects.filter(user=user, date__gte=start, date__lte=end).select_related("category")
+        totals = {row["type"]: _dec(row["total"]) for row in qs.values("type").annotate(total=Sum("amount"))}
+        income = totals.get("income", ZERO)
+        expense = totals.get("expense", ZERO)
+        category_rows = list(
+            qs.values("type", "category__name").annotate(total=Sum("amount")).order_by("type", "-total")
+        )
+        categories = {"income": [], "expense": []}
+        for row in category_rows:
+            typ = row["type"]
+            if typ in categories:
+                categories[typ].append({
+                    "name": row["category__name"] or "Uncategorized",
+                    "amount": str(_dec(row["total"]).quantize(Decimal("0.01"))),
+                })
+
+        trend = []
+        if period in {"3m", "6m"}:
+            cursor = start.replace(day=1)
+            while cursor <= end:
+                next_month_index = cursor.year * 12 + cursor.month
+                next_month = date(next_month_index // 12, next_month_index % 12 + 1, 1)
+                bucket_end = min(end, next_month - timedelta(days=1))
+                bucket_qs = qs.filter(date__gte=cursor, date__lte=bucket_end)
+                bucket_totals = {r["type"]: _dec(r["total"]) for r in bucket_qs.values("type").annotate(total=Sum("amount"))}
+                trend.append({
+                    "label": cursor.strftime("%b %Y"),
+                    "start_date": cursor.isoformat(),
+                    "end_date": bucket_end.isoformat(),
+                    "income": str(bucket_totals.get("income", ZERO).quantize(Decimal("0.01"))),
+                    "expense": str(bucket_totals.get("expense", ZERO).quantize(Decimal("0.01"))),
+                })
+                cursor = next_month
+
+        return {
+            "ok": True,
+            "tool": "get_financial_report",
+            "intent": "analytics",
+            "data_sources": ["transactions.Transaction report-period aggregates", "transactions.Category"],
+            "data": {
+                "period": period,
+                "reference_date": reference.isoformat(),
+                "start_date": start.isoformat(),
+                "end_date": end.isoformat(),
+                "currency": snapshot.currency,
+                "transaction_count": qs.count(),
+                "total_income": str(income.quantize(Decimal("0.01"))),
+                "total_expense": str(expense.quantize(Decimal("0.01"))),
+                "balance": str((income - expense).quantize(Decimal("0.01"))),
+                "categories": categories,
+                "trend": trend,
+                "analytics_path": "/report/",
+            },
+        }
+
+
+
 class CampusCoinAssistant:
     NON_DATA_INTENTS = {
         "greeting",
@@ -2093,6 +2604,9 @@ class CampusCoinAssistant:
     def __init__(self):
         self.context_service = FinanceContextService()
         self.intent_router = IntentRouter()
+        self.llm = GroqIntentRouter()  # legacy/fallback semantic router
+        self.agent = GroqFinanceAgent()
+        self.toolbox = FinanceToolbox(self.context_service)
         self.deterministic = DeterministicFinanceAssistant()
 
     def _resolve_contextual_intent(
@@ -2100,9 +2614,44 @@ class CampusCoinAssistant:
         text: str,
         history: list[dict] | None,
     ) -> tuple[str, str]:
+        intent, resolved_text, _ = self._resolve_contextual_intent_with_ai(
+            text, history, allow_ai=False
+        )
+        return intent, resolved_text
+
+    def _resolve_contextual_intent_with_ai(
+        self,
+        text: str,
+        history: list[dict] | None,
+        *,
+        allow_ai: bool = True,
+    ) -> tuple[str, str, bool]:
+        """Resilient legacy path used only if the agent cannot answer."""
         intent = self.intent_router.detect(text)
+        q = _normalize_for_intent(text)
+
+        obvious_control_intents = {
+            "greeting", "help", "data_scope", "external_balance"
+        }
+        short_follow_up = bool(history) and len(q.split()) <= 8
+        should_try_ai = (
+            allow_ai
+            and self.llm.enabled
+            and intent not in obvious_control_intents
+            and (
+                intent in {"out_of_scope", "unsupported_finance"}
+                or short_follow_up
+                or len(q.split()) >= 5
+            )
+        )
+
+        if should_try_ai:
+            decision = self.llm.route(text, history=history)
+            if decision is not None and decision.confidence >= 0.55:
+                return decision.intent, decision.resolved_text, True
+
         if intent not in {"out_of_scope", "unsupported_finance"} or not history:
-            return intent, text
+            return intent, text, False
 
         previous_user_text = next(
             (
@@ -2113,89 +2662,88 @@ class CampusCoinAssistant:
             "",
         )
         if not previous_user_text:
-            return intent, text
+            return intent, text, False
 
         previous_intent = self.intent_router.detect(previous_user_text)
-        q = _normalize_for_intent(text)
-
         spending_contexts = {
-            "monthly_expense",
-            "today_spending",
-            "week_spending",
-            "top_categories",
-            "category_spending",
-            "summary",
+            "monthly_expense", "today_spending", "week_spending",
+            "top_categories", "category_spending", "summary",
         }
         if previous_intent in spending_contexts:
             if q in {"today", "what about today", "and today", "today then", "hom nay", "hom nay thi sao"}:
-                return "today_spending", "how much did i spend today"
-            if q in {
-                "this week",
-                "what about this week",
-                "and this week",
-                "last 7 days",
-                "what about the last 7 days",
-                "tuan nay",
-                "7 ngay gan day",
-            }:
-                return "week_spending", "how much did i spend in the last 7 days"
+                return "today_spending", "how much did i spend today", False
+            if q in {"this week", "what about this week", "and this week", "last 7 days", "what about the last 7 days", "tuan nay", "7 ngay gan day"}:
+                return "week_spending", "how much did i spend in the last 7 days", False
             if q in {"last month", "what about last month", "and last month", "thang truoc", "thang truoc thi sao"}:
-                return "compare_month", "compare my spending with last month"
+                return "compare_month", "compare my spending with last month", False
 
         if previous_intent in {"balance", "spendable", "daily_budget", "summary", "savings_goal"} and q in {
-            "savings",
-            "my savings",
-            "and savings",
-            "what about my savings",
-            "savings goal",
-            "tiet kiem",
-            "muc tieu tiet kiem",
+            "savings", "my savings", "and savings", "what about my savings", "savings goal",
+            "tiet kiem", "muc tieu tiet kiem",
         }:
-            return "savings_goal", "how is my savings goal"
+            return "savings_goal", "how is my savings goal", False
 
         if previous_intent == "recent_transactions":
             count_match = re.fullmatch(r"(?:show )?(\d{1,2})(?: please)?", q)
             if count_match:
-                return "recent_transactions", f"show my {count_match.group(1)} recent transactions"
+                return "recent_transactions", f"show my {count_match.group(1)} recent transactions", False
 
         if previous_intent == "affordability" and parse_requested_amount(text) is not None:
-            return "affordability", f"can i afford {text}"
+            return "affordability", f"can i afford {text}", False
 
         if previous_intent == "category_spending" and q.startswith(("what about ", "and ")):
             category_text = re.sub(r"^(?:what about|and)\s+", "", q).strip()
             if category_text:
-                return "category_spending", f"how much did i spend on {category_text}"
+                return "category_spending", f"how much did i spend on {category_text}", False
 
         if previous_intent in {"smart_insights", "spending_risk", "summary", "saving_advice"} and q in {
-            "what should i do",
-            "what do i do",
-            "what should i do now",
-            "give me a plan",
-            "make me a plan",
-            "action plan",
-            "toi nen lam gi",
-            "gio toi nen lam gi",
-            "lap ke hoach cho toi",
+            "what should i do", "what do i do", "what should i do now", "give me a plan",
+            "make me a plan", "action plan", "toi nen lam gi", "gio toi nen lam gi", "lap ke hoach cho toi",
         }:
-            return "rest_of_month_plan", "make me a plan for the rest of the month"
+            return "rest_of_month_plan", "make me a plan for the rest of the month", False
 
         if previous_intent in {"summary", "smart_insights", "spending_risk"} and q in {
-            "any advice",
-            "give me advice",
-            "how can i improve",
-            "how can i save more",
-            "toi nen tiet kiem the nao",
-            "co loi khuyen nao khong",
+            "any advice", "give me advice", "how can i improve", "how can i save more",
+            "toi nen tiet kiem the nao", "co loi khuyen nao khong",
         }:
-            return "saving_advice", "give me personalized saving tips"
+            return "saving_advice", "give me personalized saving tips", False
 
-        return intent, text
+        return intent, text, False
 
     def reply(self, user, text: str, history: list[dict] | None = None) -> dict:
-        intent, resolved_text = self._resolve_contextual_intent(text, history)
+        """Use the LLM agent first; deterministic routing is only a fallback."""
+        if self.agent.enabled:
+            agent_result = self.agent.chat(
+                text,
+                history,
+                execute_tool=lambda name, args: self.toolbox.execute(user, name, args),
+            )
+            if agent_result is not None:
+                intent = agent_result.intents[-1] if agent_result.intents else "ai_chat"
+                snapshot = {}
+                if agent_result.tools_used:
+                    try:
+                        snapshot = self._response_snapshot(self.context_service.build(user))
+                    except Exception:
+                        snapshot = {}
+                return {
+                    "answer": agent_result.answer,
+                    "intent": intent,
+                    "source": "ai_agent_with_campus_coin_tools" if agent_result.tools_used else "ai_conversation",
+                    "data_sources": list(agent_result.data_sources),
+                    "snapshot": snapshot,
+                    "ai": self._ai_metadata(
+                        used=True,
+                        mode="tool_calling_agent",
+                        tools_used=list(agent_result.tools_used),
+                    ),
+                }
 
-        # Do not query finance tables for greetings, help, privacy/scope questions,
-        # unsupported requests, or requests for live external-account data.
+        return self._fallback_reply(user, text, history)
+
+    def _fallback_reply(self, user, text: str, history: list[dict] | None = None) -> dict:
+        intent, resolved_text, ai_used = self._resolve_contextual_intent_with_ai(text, history)
+
         if intent in self.NON_DATA_INTENTS:
             answer = self.deterministic.answer(user, resolved_text, None, intent)
             return {
@@ -2204,16 +2752,11 @@ class CampusCoinAssistant:
                 "source": "scope_guard" if intent in {"out_of_scope", "unsupported_finance", "external_balance"} else "assistant_capabilities",
                 "data_sources": [],
                 "snapshot": {},
+                "ai": self._ai_metadata(ai_used, mode="fallback_router" if ai_used else "deterministic_fallback"),
             }
 
         snapshot = self.context_service.build(user)
-        core_answer = self.deterministic.answer(
-            user,
-            resolved_text,
-            snapshot,
-            intent,
-        )
-
+        core_answer = self.deterministic.answer(user, resolved_text, snapshot, intent)
         if core_answer is not None:
             return {
                 "answer": core_answer,
@@ -2221,9 +2764,9 @@ class CampusCoinAssistant:
                 "source": "campus_coin_data",
                 "data_sources": list(INTENT_DATA_SOURCES.get(intent, ())),
                 "snapshot": self._response_snapshot(snapshot),
+                "ai": self._ai_metadata(ai_used, mode="fallback_router" if ai_used else "deterministic_fallback"),
             }
 
-        # Defensive fallback: an unknown path must never become a general-purpose chatbot.
         return {
             "answer": (
                 "I could not map that request to a supported Campus Coin finance action. "
@@ -2233,6 +2776,20 @@ class CampusCoinAssistant:
             "source": "scope_guard",
             "data_sources": [],
             "snapshot": {},
+            "ai": self._ai_metadata(ai_used, mode="deterministic_fallback"),
+        }
+
+    def _ai_metadata(self, used: bool, mode: str = "", tools_used: list[str] | None = None) -> dict:
+        enabled = self.agent.enabled or self.llm.enabled
+        model = self.agent.model if self.agent.enabled else self.llm.model
+        provider = self.agent.provider if self.agent.enabled else self.llm.provider
+        return {
+            "enabled": enabled,
+            "used": bool(used),
+            "provider": provider if enabled else "",
+            "model": model if enabled else "",
+            "mode": mode,
+            "tools_used": tools_used or [],
         }
 
     @staticmethod
@@ -2241,24 +2798,11 @@ class CampusCoinAssistant:
             "reference_date": snapshot.reference_date.isoformat(),
             "month_transaction_count": snapshot.month_transaction_count,
             "expense_transaction_count": snapshot.expense_transaction_count,
-            "remaining": str(
-                snapshot.remaining_funds.quantize(Decimal("0.01"))
-            ),
-            "safe_to_spend": str(
-                snapshot.safe_to_spend_now.quantize(Decimal("0.01"))
-            ),
-            "savings_shortfall": str(
-                max(
-                    snapshot.savings_goal - snapshot.remaining_funds,
-                    ZERO,
-                ).quantize(Decimal("0.01"))
-            ),
-            "expense": str(
-                snapshot.month_expense.quantize(Decimal("0.01"))
-            ),
-            "safe_daily": str(
-                snapshot.safe_daily_budget.quantize(Decimal("0.01"))
-            ),
+            "remaining": str(snapshot.remaining_funds.quantize(Decimal("0.01"))),
+            "safe_to_spend": str(snapshot.safe_to_spend_now.quantize(Decimal("0.01"))),
+            "savings_shortfall": str(max(snapshot.savings_goal - snapshot.remaining_funds, ZERO).quantize(Decimal("0.01"))),
+            "expense": str(snapshot.month_expense.quantize(Decimal("0.01"))),
+            "safe_daily": str(snapshot.safe_daily_budget.quantize(Decimal("0.01"))),
             "currency": snapshot.currency,
         }
 

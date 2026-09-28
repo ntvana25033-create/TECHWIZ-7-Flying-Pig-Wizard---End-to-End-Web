@@ -23,7 +23,7 @@
         <div class="assistant-engine-status">
             <span class="assistant-status-dot"></span>
             {% if assistant_ai_enabled %}
-                Hybrid AI + verified finance engine
+                AI agent + Campus Coin knowledge + verified tools
             {% else %}
                 Verified local finance engine
             {% endif %}
@@ -54,7 +54,7 @@
             <div class="assistant-avatar">AI</div>
             <div>
                 <h2>Campus Coin AI</h2>
-                <p>Grounded in your own transaction data</p>
+                <p>Understands naturally • knows Campus Coin • grounded in your data</p>
             </div>
             <div class="assistant-privacy-chip">Private workspace</div>
         </header>
@@ -82,11 +82,15 @@
                 <div class="assistant-empty-state" data-chat-empty>
                     <div class="assistant-empty-orb">AI</div>
                     <h2>Turn your transactions into decisions.</h2>
-                    <p>I only use finance data stored in Campus Coin. I can answer questions, analyze your spending, flag overspending risk, protect your savings goal, and build a practical plan for the rest of the month.</p>
+                    <p>Ask me naturally about Campus Coin features or your stored finance data. I can guide you around the web app, explain how features work, analyze spending, protect your savings goal, and answer follow-up questions in context.</p>
                     <div class="assistant-starter-grid">
                         <button type="button" data-prompt="What can you do?">
                             <strong>See what I can do</strong>
                             <span>Capabilities, examples, and limits</span>
+                        </button>
+                        <button type="button" data-prompt="How do I import transactions from CSV and review AI category suggestions?">
+                            <strong>Learn a Campus Coin feature</strong>
+                            <span>Ask how pages, reports, imports, profile, or notifications work</span>
                         </button>
                         <button type="button" data-prompt="Analyze my finances and give me smart insights.">
                             <strong>Smart financial insights</strong>
@@ -139,8 +143,14 @@
             <button type="button" data-prompt="Summarize my financial situation this month.">Monthly summary</button>
         </div>
 
-        <p class="assistant-footnote"><strong>Preset questions only.</strong> Choose one of the suggested questions above. Free-text input is disabled so the assistant stays within the supported Campus Coin finance functions.</p>
-        <p class="assistant-footnote">Scope: Campus Coin finance data only. The assistant does not answer unrelated topics and cannot read live bank or e-wallet balances.</p>
+        <form class="assistant-compose" data-chat-form>
+            <textarea rows="1" maxlength="4000" placeholder="Ask about Campus Coin or your finance data…" aria-label="Message Campus Coin AI"></textarea>
+            <button type="submit">
+                <span>Send</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.4 20.4 17.2-8.4L3.4 3.6 3 10l11 2-11 2 .4 6.4Z"/></svg>
+            </button>
+        </form>
+        <p class="assistant-footnote">Scope: Campus Coin features, your stored Campus Coin finance data, and general budgeting education. No live bank or e-wallet access.</p>
     </section>
 </section>
 {% endblock %}

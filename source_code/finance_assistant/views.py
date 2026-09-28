@@ -14,7 +14,7 @@ from transactions.mixins import StudentRequiredMixin
 from .models import ChatMessage, ChatSession
 from .services import assistant_engine
 
-MAX_MESSAGE_LENGTH = 2000
+MAX_MESSAGE_LENGTH = 4000
 
 
 def _read_json(request):
@@ -67,7 +67,7 @@ class AssistantHomeView(StudentRequiredMixin, View):
                 "chat_sessions": sessions,
                 "active_session": active_session,
                 "active_messages": active_messages,
-                "assistant_ai_enabled": bool(getattr(getattr(assistant_engine, "llm", None), "enabled", False)),
+                "assistant_ai_enabled": bool(getattr(getattr(assistant_engine, "agent", None), "enabled", False) or getattr(getattr(assistant_engine, "llm", None), "enabled", False)),
             },
         )
 
@@ -118,7 +118,7 @@ class ChatAPIView(StudentRequiredMixin, View):
                 session.save(update_fields=["title", "updated_at"])
 
             history = list(
-                session.messages.order_by("-created_at", "-id")[:8].values("role", "content")
+                session.messages.order_by("-created_at", "-id")[:20].values("role", "content")
             )
             history.reverse()
 
@@ -138,6 +138,7 @@ class ChatAPIView(StudentRequiredMixin, View):
                     "source": result.get("source", ""),
                     "data_sources": result.get("data_sources", []),
                     "snapshot": result.get("snapshot", {}),
+                    "ai": result.get("ai", {}),
                 },
             )
             session.last_message_at = timezone.now()
@@ -153,6 +154,7 @@ class ChatAPIView(StudentRequiredMixin, View):
                 "source": result.get("source", ""),
                 "data_sources": result.get("data_sources", []),
                 "snapshot": result.get("snapshot", {}),
+                "ai": result.get("ai", {}),
             }
         )
 

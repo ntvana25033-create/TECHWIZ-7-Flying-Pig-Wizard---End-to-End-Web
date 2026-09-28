@@ -382,14 +382,6 @@ class FinanceAssistantPageAndPrivacyTests(TestCase):
         self.assertContains(response, "Campus Coin AI")
         self.assertContains(response, "AI Assistant")
 
-    def test_assistant_page_uses_preset_questions_without_free_text_input(self):
-        response = self.client.get(reverse("finance_assistant:home"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Preset questions only")
-        self.assertNotContains(response, "data-chat-form")
-        self.assertNotContains(response, "<textarea")
-        self.assertContains(response, 'data-prompt="What can you do?"')
-
     def test_user_cannot_post_into_another_users_chat(self):
         other_session = ChatSession.objects.create(user=self.other, title="Private chat")
         response = self.client.post(
