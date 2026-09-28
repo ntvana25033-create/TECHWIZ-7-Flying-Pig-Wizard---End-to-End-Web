@@ -1,0 +1,15 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Account Details | Campus Coin{% endblock %}
+{% block page_name %}Account Details{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><a class="back-link" href="{% url 'accounts:admin_user_list' %}">← Account List</a><h1>{{ target.profile.full_name }}</h1><p>{{ target.email }}</p></div><a class="btn" href="{% url 'accounts:admin_user_edit' target.user_id %}">Edit</a></div>
+<section class="admin-card"><div class="detail-grid">
+<div><span>ID</span><strong>#{{ target.user_id }}</strong></div><div><span>Role</span><strong>{{ target.role.get_role_name_display }}</strong></div><div><span>Status</span><strong>{{ target.get_status_display }}</strong></div><div><span>Academic year</span><strong>{{ target.profile.academic_year|default:'-' }}</strong></div><div><span>Failed sign-ins</span><strong>{{ target.failed_login_attempts }}</strong></div><div><span>Last sign-in</span><strong>{{ target.last_login|date:'d/m/Y H:i'|default:'-' }}</strong></div><div><span>Created at</span><strong>{{ target.created_at|date:'d/m/Y H:i' }}</strong></div><div><span>Locked until</span><strong>{{ target.locked_until|date:'d/m/Y H:i'|default:'-' }}</strong></div>
+</div>
+<div class="admin-actions">
+<form method="post" action="{% url 'accounts:admin_user_toggle_status' target.user_id %}">{% csrf_token %}<button class="btn {% if target.status == 'ACTIVE' %}danger{% else %}primary{% endif %}" type="submit">{% if target.status == 'ACTIVE' %}Disabled{% else %}Reactivate{% endif %}</button></form>
+<form method="post" action="{% url 'accounts:admin_user_send_reset' target.user_id %}">{% csrf_token %}<button class="btn" type="submit">Send password reset link</button></form>
+{% if target.user_id != user.user_id %}<form method="post" action="{% url 'accounts:admin_user_delete' target.user_id %}" onsubmit="return confirm('Soft-delete this account from the system?')">{% csrf_token %}<button class="btn danger-outline" type="submit">Delete account</button></form>{% endif %}
+</div></section>
+<section class="admin-card"><div class="admin-card-head"><div><h2>10 Most Recent Login Sessions</h2><p>Review this account's session activity.</p></div></div>{% for item in sessions %}<div class="session-line"><strong>{{ item.ip_address|default:'Unknown IP' }}</strong> · {{ item.last_activity_at|date:'d/m/Y H:i' }} · {% if item.revoked_at %}<span class="negative">Revoked</span>{% elif item.is_active %}<span class="positive">Active</span>{% else %}Expired{% endif %}</div>{% empty %}<p>No login sessions yet.</p>{% endfor %}</section>
+{% endblock %}

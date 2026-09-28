@@ -1,0 +1,22 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Categories | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">CATEGORIES</p>
+        <h1>Income and Expense Categories</h1>
+        <p class="muted">These categories are shared by the transaction form, CSV import, AI classifier, and reports.</p>
+    </div>
+    <a class="btn" href="{% url 'transactions:transaction-list' %}">Back to transactions</a>
+</div>
+<section class="card">
+    <div class="category-list">
+        {% for category in categories %}
+        <div class="category-item">
+            <strong>{{ category.name }}</strong>
+            <span class="pill {{ category.type }}">{{ category.get_type_display }}</span>
+        </div>
+        {% empty %}<p class="empty">There are no categories in the system yet.</p>{% endfor %}
+    </div>
+</section>
+{% endblock %}

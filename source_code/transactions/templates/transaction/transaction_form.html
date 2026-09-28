@@ -1,0 +1,113 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}{% if object %}Edit Transaction{% else %}Add Transaction{% endif %} | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">TRANSACTIONS</p>
+        <h1>{% if object %}Edit transaction{% else %}Add new transaction{% endif %}</h1>
+        <p class="muted">Enter a description and the AI will suggest a category. You can change it before saving.</p>
+    </div>
+    <a class="btn" href="{% url 'transactions:transaction-list' %}">Back to transactions</a>
+</div>
+<section class="card form-card">
+    <form method="post" id="transactionForm" data-categories-url="{% url 'transactions:ajax_load_categories' %}" data-ai-predict-url="{% url 'transactions:ajax_ai_predict' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <div id="aiStatus" class="ai-status" aria-live="polite"></div>
+        <div class="inline-actions form-submit-row">
+            <button class="btn primary" type="submit">Save transaction</button>
+            <a class="btn" href="{% url 'transactions:transaction-list' %}">Cancel</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+{% block extra_head %}
+<style>
+.ai-status{min-height:20px;margin:4px 0 16px;font-size:13px;color:#5f6f65}.ai-status.is-success{color:#2e7d32;font-weight:700}.ai-status.is-warning{color:#9a6700}.form-submit-row{margin-top:18px;justify-content:flex-start}
+</style>
+{% endblock %}
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('transactionForm');
+    const typeSelect = document.getElementById('id_type');
+    const categorySelect = document.getElementById('id_category');
+    const descriptionInput = document.getElementById('id_description');
+    const aiStatus = document.getElementById('aiStatus');
+    const categoriesUrl = form.dataset.categoriesUrl;
+    const aiPredictUrl = form.dataset.aiPredictUrl;
+    let predictionTimer = null, predictionRequest = null, categoriesRequest = null;
+
+    function setAIStatus(message = '', state = '') {
+        aiStatus.textContent = message;
+        aiStatus.className = 'ai-status';
+        if (state) aiStatus.classList.add(`is-${state}`);
+    }
+
+    async function loadCategories(selectedType, selectedCategoryId = '') {
+        if (categoriesRequest) categoriesRequest.abort();
+        categorySelect.innerHTML = '<option value="">---------</option>';
+        categorySelect.disabled = !selectedType;
+        if (!selectedType) return;
+        categoriesRequest = new AbortController();
+        try {
+            const response = await fetch(`${categoriesUrl}?type=${encodeURIComponent(selectedType)}`, {signal: categoriesRequest.signal});
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const categories = await response.json();
+            categories.forEach(category => {
+                const option = document.createElement('option');
+                option.value = String(category.id);
+                option.textContent = category.name;
+                option.selected = String(category.id) === String(selectedCategoryId);
+                categorySelect.appendChild(option);
+            });
+            categorySelect.disabled = false;
+        } catch (error) {
+            if (error.name !== 'AbortError') setAIStatus('Could not load categories. Please try again.', 'warning');
+        }
+    }
+
+    async function predictCategory() {
+        const description = descriptionInput.value.trim();
+        const selectedType = typeSelect.value;
+        if (!description) { setAIStatus(''); return; }
+        if (!selectedType) { setAIStatus('Select a transaction type before using the AI category suggestion.', 'warning'); return; }
+        if (predictionRequest) predictionRequest.abort();
+        predictionRequest = new AbortController();
+        setAIStatus('AI is predicting a category...');
+        try {
+            const params = new URLSearchParams({description, type:selectedType});
+            const response = await fetch(`${aiPredictUrl}?${params.toString()}`, {signal:predictionRequest.signal});
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const data = await response.json();
+            if (typeSelect.value !== selectedType || descriptionInput.value.trim() !== description) return;
+            const prediction = data.prediction;
+            if (!prediction) { setAIStatus('The AI does not have enough matching data to suggest a category yet.', 'warning'); return; }
+            const predictedId = String(prediction.category_id);
+            const optionExists = Array.from(categorySelect.options).some(option => option.value === predictedId);
+            if (!optionExists) await loadCategories(selectedType);
+            if (typeSelect.value !== selectedType || descriptionInput.value.trim() !== description) return;
+            categorySelect.value = predictedId;
+            if (categorySelect.value !== predictedId) { setAIStatus('The AI prediction points to a category that is no longer available.', 'warning'); return; }
+            const similarity = Math.round(Number(prediction.confidence || 0) * 100);
+            setAIStatus(`AI selected ${prediction.category_name} (${similarity}% similarity). You can still change the category before saving.`, 'success');
+        } catch (error) {
+            if (error.name !== 'AbortError') setAIStatus('The AI suggestion is temporarily unavailable.', 'warning');
+        }
+    }
+
+    function schedulePrediction() { clearTimeout(predictionTimer); predictionTimer = setTimeout(predictCategory, 500); }
+    typeSelect.addEventListener('change', async function() {
+        clearTimeout(predictionTimer);
+        if (predictionRequest) predictionRequest.abort();
+        setAIStatus('');
+        await loadCategories(typeSelect.value);
+        if (descriptionInput.value.trim()) predictCategory();
+    });
+    descriptionInput.addEventListener('input', schedulePrediction);
+    descriptionInput.addEventListener('blur', function() { clearTimeout(predictionTimer); predictCategory(); });
+    const initialCategory = categorySelect.value;
+    if (typeSelect.value) loadCategories(typeSelect.value, initialCategory); else categorySelect.disabled = true;
+});
+</script>
+{% endblock %}

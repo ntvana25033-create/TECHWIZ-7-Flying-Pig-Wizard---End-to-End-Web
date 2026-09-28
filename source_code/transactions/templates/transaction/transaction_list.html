@@ -1,0 +1,87 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% block title %}Transactions | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">TRANSACTIONS</p>
+        <h1>Transaction History</h1>
+        <p class="muted">Review, edit, import, and organize the transactions for {{ user.email }}.</p>
+    </div>
+    <div class="inline-actions">
+        <a class="btn primary" href="{% url 'transactions:transaction-create' %}">Add transaction</a>
+        <a class="btn" href="{% url 'transactions:csv-import' %}">Import CSV + AI</a>
+    </div>
+</div>
+
+<section class="card transaction-search-card">
+    <form method="get" class="transaction-search-form">
+        <div class="search-wide">
+            <label for="txn-search">Search</label>
+            <input id="txn-search" type="search" name="q" value="{{ search_query }}" placeholder="Description, category, type, amount, date or ID">
+        </div>
+        <div>
+            <label for="txn-type">Type</label>
+            <select id="txn-type" name="type">
+                <option value="">All types</option>
+                <option value="income" {% if selected_type == 'income' %}selected{% endif %}>Income</option>
+                <option value="expense" {% if selected_type == 'expense' %}selected{% endif %}>Expense</option>
+            </select>
+        </div>
+        <div>
+            <label for="txn-category">Category</label>
+            <select id="txn-category" name="category">
+                <option value="">All categories</option>
+                {% for category in search_categories %}<option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }} ({{ category.get_type_display }})</option>{% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="txn-date-from">From</label>
+            <input id="txn-date-from" type="date" name="date_from" value="{{ date_from }}">
+        </div>
+        <div>
+            <label for="txn-date-to">To</label>
+            <input id="txn-date-to" type="date" name="date_to" value="{{ date_to }}">
+        </div>
+        <div class="search-actions">
+            <button class="btn primary" type="submit">Search</button>
+            <a class="btn" href="{% url 'transactions:transaction-list' %}">Clear</a>
+        </div>
+    </form>
+</section>
+
+<section class="card">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th><th>Category</th><th>Type</th><th class="money">Amount</th><th>Description</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for txn in transactions %}
+                <tr>
+                    <td>{{ txn.date|date:"M d, Y" }}</td>
+                    <td>{{ txn.category.name|default:"Uncategorized" }}</td>
+                    <td><span class="pill {{ txn.type }}">{{ txn.get_type_display }}</span></td>
+                    <td class="money">${{ txn.amount|floatformat:2 }}</td>
+                    <td>{{ txn.description|default:"—" }}</td>
+                    <td>
+                        <div class="inline-actions">
+                            <a href="{% url 'transactions:transaction-update' txn.pk %}">Edit</a>
+                            <a class="negative" href="{% url 'transactions:transaction-delete' txn.pk %}">Delete</a>
+                        </div>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr><td colspan="6" class="empty">No transactions match the current search or filters.</td></tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+{% block extra_head %}
+<style>
+.transaction-search-card{margin-bottom:18px}.transaction-search-form{display:grid;grid-template-columns:minmax(240px,2fr) repeat(4,minmax(135px,1fr)) auto;gap:12px;align-items:end}.transaction-search-form label{display:block;margin-bottom:6px;font-size:12px;font-weight:800;color:var(--muted)}.transaction-search-form .search-actions{display:flex;gap:8px;align-items:center}.transaction-search-form .search-wide{min-width:0}@media(max-width:1100px){.transaction-search-form{grid-template-columns:repeat(2,minmax(0,1fr))}.transaction-search-form .search-wide{grid-column:1/-1}.transaction-search-form .search-actions{grid-column:1/-1}}@media(max-width:640px){.transaction-search-form{grid-template-columns:1fr}.transaction-search-form .search-wide,.transaction-search-form .search-actions{grid-column:auto}.transaction-search-form .search-actions{align-items:stretch;flex-direction:column}}
+</style>
+{% endblock %}

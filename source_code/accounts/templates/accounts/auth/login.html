@@ -1,0 +1,16 @@
+{% extends 'accounts/layouts/auth_base.html' %}{% load static %}
+{% block title %}Sign In | Campus Coin{% endblock %}
+{% block content %}
+<div class="auth-card-head"><span class="auth-kicker">WELCOME BACK</span><h2>Sign in to Campus Coin</h2><p>Continue tracking your finances, budgets, and savings goals.</p></div>
+<form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+    {% if form.non_field_errors %}<div class="alert error">{{ form.non_field_errors }}</div>{% endif %}
+    {% include 'accounts/partials/field.html' with field=form.email %}
+    <div class="password-field">{% include 'accounts/partials/field.html' with field=form.password %}<button type="button" class="password-toggle" data-toggle-password="id_password">Show</button></div>
+    <div class="form-actions"><a href="{% url 'accounts:forgot_password' %}">Forgot password?</a></div>
+    <button type="submit" class="primary-btn"><span>Sign in</span><span>→</span></button>
+</form>
+<div class="auth-footer"><span>Don't have an account?</span><a href="{% url 'accounts:register' %}">Create account</a><span class="footer-separator">·</span><a href="{% url 'accounts:admin_login' %}">Admin Portal</a></div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/register.js' %}?v=20260926"></script>{% endblock %}

@@ -1,0 +1,134 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}Admin | Campus Coin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260926-ui-final">
+    <link rel="stylesheet" href="{% static 'accounts/css/admin.css' %}?v=20260926-admin-final">
+    {% block extra_head %}{% endblock %}
+</head>
+<body data-authenticated="1" data-portal="admin">
+<div class="admin-shell">
+    <aside class="admin-sidebar" data-admin-sidebar>
+        <div class="admin-sidebar-head">
+            <a class="admin-brand" href="{% url 'accounts:admin_dashboard' %}">
+                <span>CC</span>
+                <div>Campus Coin<small>Administration</small></div>
+            </a>
+            <button class="admin-nav-toggle" type="button" aria-expanded="false" aria-controls="adminNavPanel" data-admin-nav-toggle>
+                <span aria-hidden="true">☰</span><span class="sr-only">Open admin navigation</span>
+            </button>
+        </div>
+
+        <div id="adminNavPanel" class="admin-nav-panel" data-admin-nav-panel>
+            <nav class="admin-nav">
+                <a class="{% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'accounts:admin_dashboard' %}">Overview</a>
+                <a class="{% if request.resolver_match.url_name == 'admin_user_list' or request.resolver_match.url_name == 'admin_user_detail' or request.resolver_match.url_name == 'admin_user_edit' %}active{% endif %}" href="{% url 'accounts:admin_user_list' %}">Account Management</a>
+                <a class="{% if request.resolver_match.url_name == 'admin_user_create' %}active{% endif %}" href="{% url 'accounts:admin_user_create' %}">Create account</a>
+                <a class="{% if request.resolver_match.url_name == 'admin-category-list' or request.resolver_match.url_name == 'admin-category-create' or request.resolver_match.url_name == 'admin-category-update' or request.resolver_match.url_name == 'admin-category-delete' %}active{% endif %}" href="{% url 'transactions:admin-category-list' %}">Category Management</a>
+                <a class="{% if request.resolver_match.url_name == 'admin-transaction-list' %}active{% endif %}" href="{% url 'transactions:admin-transaction-list' %}">Transaction Management</a>
+                <a class="{% if request.resolver_match.namespace == 'notifications' %}active{% endif %}" href="{% url 'notifications:admin-list' %}">Notification Management</a>
+            </nav>
+            <div class="admin-side-bottom">
+                <a class="{% if request.resolver_match.url_name == 'admin_profile' %}active{% endif %}" href="{% url 'accounts:admin_profile' %}">Admin Profile</a>
+                <a class="{% if request.resolver_match.url_name == 'admin_sessions' %}active{% endif %}" href="{% url 'accounts:admin_sessions' %}">Session security</a>
+                <a class="{% if request.resolver_match.url_name == 'admin_change_password' %}active{% endif %}" href="{% url 'accounts:admin_change_password' %}">Change password</a>
+                <a href="{% url 'accounts:admin_logout' %}">Sign out</a>
+            </div>
+        </div>
+    </aside>
+
+    <section class="admin-main">
+        <header class="admin-topbar">
+            <div>
+                <span class="admin-eyebrow">Admin Portal</span>
+                <strong>{% block page_name %}Campus Coin{% endblock %}</strong>
+            </div>
+
+            <div class="account-menu-wrap admin-account-wrap">
+                <button class="admin-account admin-account-link account-menu-trigger" type="button" aria-expanded="false" aria-controls="adminAccountMenu" data-admin-account-button>
+                    <span class="admin-account-copy"><span>{{ user.get_full_name }}</span><small>{{ user.email }}</small></span>
+                    {% if user.profile.avatar_path %}
+                        <img class="header-avatar" src="{{ user.profile.avatar_path.url }}" alt="{{ user.get_full_name }} profile picture">
+                    {% else %}
+                        <span class="header-avatar fallback">{{ user.get_full_name|first|upper }}</span>
+                    {% endif %}
+                    <span class="account-chevron" aria-hidden="true">⌄</span>
+                </button>
+                <div id="adminAccountMenu" class="account-menu admin-account-menu" data-admin-account-menu hidden>
+                    <div class="account-menu-head">
+                        {% if user.profile.avatar_path %}
+                            <img class="account-menu-avatar" src="{{ user.profile.avatar_path.url }}" alt="">
+                        {% else %}
+                            <span class="account-menu-avatar fallback">{{ user.get_full_name|first|upper }}</span>
+                        {% endif %}
+                        <div><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></div>
+                    </div>
+                    <div class="account-menu-links">
+                        <a href="{% url 'accounts:admin_profile' %}"><span>Admin profile</span><small>Identity and account details</small></a>
+                        <a href="{% url 'accounts:admin_sessions' %}"><span>Session security</span><small>Review administrator sessions</small></a>
+                        <a href="{% url 'accounts:admin_change_password' %}"><span>Change password</span><small>Update account security</small></a>
+                        <a class="account-menu-signout" href="{% url 'accounts:admin_logout' %}"><span>Sign out</span><small>End the admin session</small></a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="admin-content">
+            {% if messages %}{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </section>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const navButton = document.querySelector('[data-admin-nav-toggle]');
+    const navPanel = document.querySelector('[data-admin-nav-panel]');
+    const accountButton = document.querySelector('[data-admin-account-button]');
+    const accountMenu = document.querySelector('[data-admin-account-menu]');
+
+    function closeNav() {
+        if (!navButton || !navPanel) return;
+        navButton.setAttribute('aria-expanded', 'false');
+        navPanel.classList.remove('open');
+    }
+    function closeAccount() {
+        if (!accountButton || !accountMenu) return;
+        accountButton.setAttribute('aria-expanded', 'false');
+        accountMenu.hidden = true;
+        accountMenu.classList.remove('open');
+    }
+
+    if (navButton && navPanel) {
+        navButton.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const willOpen = !navPanel.classList.contains('open');
+            closeAccount();
+            navPanel.classList.toggle('open', willOpen);
+            navButton.setAttribute('aria-expanded', String(willOpen));
+        });
+    }
+    if (accountButton && accountMenu) {
+        accountButton.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const willOpen = accountMenu.hidden;
+            accountMenu.hidden = !willOpen;
+            accountMenu.classList.toggle('open', willOpen);
+            accountButton.setAttribute('aria-expanded', String(willOpen));
+        });
+        accountMenu.addEventListener('click', function (event) { event.stopPropagation(); });
+    }
+    document.addEventListener('click', function () { closeAccount(); });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') { closeNav(); closeAccount(); }
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 920) closeNav();
+    });
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

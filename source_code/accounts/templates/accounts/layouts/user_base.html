@@ -1,0 +1,160 @@
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>{% block title %}Campus Coin{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260926-ui-final">
+    <link rel="stylesheet" href="{% static 'finance_assistant/css/chat.css' %}?v=20260926-responsive">
+    {% block extra_head %}{% endblock %}
+</head>
+<body data-authenticated="1" data-portal="user">
+<div class="app-shell">
+    <header class="site-header">
+        <div class="site-header-inner">
+            <a class="brand" href="{% url 'transactions:transaction-list' %}" aria-label="Campus Coin home">
+                <span class="brand-mark">CC</span>
+                <span class="brand-copy">
+                    <strong>Campus Coin</strong>
+                    <small>Student Finance Portal</small>
+                </span>
+            </a>
+
+            <nav class="header-nav" aria-label="Primary navigation">
+                <a class="{% if request.resolver_match.namespace == 'transactions' and request.resolver_match.url_name == 'transaction-list' %}active{% endif %}" href="{% url 'transactions:transaction-list' %}">Transactions</a>
+                <a class="{% if request.resolver_match.url_name == 'transaction-create' or request.resolver_match.url_name == 'transaction-update' %}active{% endif %}" href="{% url 'transactions:transaction-create' %}">Add Transaction</a>
+                <a class="{% if request.resolver_match.url_name == 'csv-import' or request.resolver_match.url_name == 'csv-import-preview' or request.resolver_match.url_name == 'csv-import-confirm' %}active{% endif %}" href="{% url 'transactions:csv-import' %}">Import CSV</a>
+                <a class="{% if request.resolver_match.url_name == 'category-list' %}active{% endif %}" href="{% url 'transactions:category-list' %}">Categories</a>
+                <a class="{% if request.resolver_match.namespace == 'report' %}active{% endif %}" href="{% url 'report:dashboard' %}">Analytics</a>
+                <a class="{% if request.resolver_match.namespace == 'notifications' %}active{% endif %}" href="{% url 'notifications:list' %}">Notifications{% if notification_unread_count %}<span class="nav-badge">{{ notification_unread_count }}</span>{% endif %}</a>
+                <a class="{% if request.resolver_match.namespace == 'finance_assistant' %}active{% endif %}" href="{% url 'finance_assistant:home' %}">AI Assistant <span class="nav-ai-pill">AI</span></a>
+            </nav>
+
+            <div class="header-controls">
+                <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobileNavPanel" data-nav-toggle>
+                    <span class="nav-toggle-lines" aria-hidden="true"><i></i><i></i><i></i></span>
+                    <span class="sr-only">Open navigation</span>
+                </button>
+
+                <div class="account-menu-wrap">
+                    <button class="header-account account-menu-trigger" type="button" aria-expanded="false" aria-controls="userAccountMenu" data-account-menu-button>
+                        {% if user.profile.avatar_path %}
+                            <img class="header-avatar" src="{{ user.profile.avatar_path.url }}" alt="{{ user.get_full_name }} profile picture">
+                        {% else %}
+                            <span class="header-avatar fallback">{{ user.get_full_name|first|upper }}</span>
+                        {% endif %}
+                        <span class="header-account-copy"><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></span>
+                        <span class="account-chevron" aria-hidden="true">⌄</span>
+                    </button>
+
+                    <div id="userAccountMenu" class="account-menu" data-account-menu hidden>
+                        <div class="account-menu-head">
+                            {% if user.profile.avatar_path %}
+                                <img class="account-menu-avatar" src="{{ user.profile.avatar_path.url }}" alt="">
+                            {% else %}
+                                <span class="account-menu-avatar fallback">{{ user.get_full_name|first|upper }}</span>
+                            {% endif %}
+                            <div><strong>{{ user.get_full_name }}</strong><span>{{ user.email }}</span></div>
+                        </div>
+                        <div class="account-menu-links">
+                            <a href="{% url 'accounts:profile' %}"><span>Profile settings</span><small>Personal details and finance preferences</small></a>
+                            <a href="{% url 'accounts:sessions' %}"><span>Login sessions</span><small>Review and revoke devices</small></a>
+                            <a href="{% url 'accounts:change_password' %}"><span>Change password</span><small>Update account security</small></a>
+                            <a class="account-menu-signout" href="{% url 'accounts:logout' %}"><span>Sign out</span><small>End this session</small></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobileNavPanel" class="mobile-nav-panel" hidden>
+            <nav class="mobile-nav" aria-label="Mobile navigation">
+                <a class="{% if request.resolver_match.namespace == 'transactions' and request.resolver_match.url_name == 'transaction-list' %}active{% endif %}" href="{% url 'transactions:transaction-list' %}"><span>Transactions</span><small>View your finance history</small></a>
+                <a class="{% if request.resolver_match.url_name == 'transaction-create' or request.resolver_match.url_name == 'transaction-update' %}active{% endif %}" href="{% url 'transactions:transaction-create' %}"><span>Add Transaction</span><small>Create income or expense records</small></a>
+                <a class="{% if request.resolver_match.url_name == 'csv-import' or request.resolver_match.url_name == 'csv-import-preview' or request.resolver_match.url_name == 'csv-import-confirm' %}active{% endif %}" href="{% url 'transactions:csv-import' %}"><span>Import CSV</span><small>Review AI category suggestions</small></a>
+                <a class="{% if request.resolver_match.url_name == 'category-list' %}active{% endif %}" href="{% url 'transactions:category-list' %}"><span>Categories</span><small>Browse income and expense categories</small></a>
+                <a class="{% if request.resolver_match.namespace == 'report' %}active{% endif %}" href="{% url 'report:dashboard' %}"><span>Analytics</span><small>Reports and spending trends</small></a>
+                <a class="{% if request.resolver_match.namespace == 'notifications' %}active{% endif %}" href="{% url 'notifications:list' %}"><span>Notifications {% if notification_unread_count %}<b class="nav-badge">{{ notification_unread_count }}</b>{% endif %}</span><small>Summaries and spending alerts</small></a>
+                <a class="{% if request.resolver_match.namespace == 'finance_assistant' %}active{% endif %}" href="{% url 'finance_assistant:home' %}"><span>AI Assistant <b class="nav-ai-pill">AI</b></span><small>Ask questions about your finances</small></a>
+            </nav>
+        </div>
+    </header>
+
+    <section class="main-shell">
+        <main class="container">
+            {% if messages %}{% for message in messages %}<div class="message {{ message.tags }}">{{ message }}</div>{% endfor %}{% endif %}
+            {% block content %}{% endblock %}
+        </main>
+    </section>
+</div>
+<div id="toast-stack" class="toast-stack"></div>
+{% if request.resolver_match.namespace != 'finance_assistant' %}
+    {% include 'finance_assistant/widget.html' %}
+{% endif %}
+<script src="{% static 'finance_assistant/js/chat.js' %}?v=20260926-responsive" defer></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const navButton = document.querySelector('[data-nav-toggle]');
+    const navPanel = document.getElementById('mobileNavPanel');
+    const accountButton = document.querySelector('[data-account-menu-button]');
+    const accountMenu = document.querySelector('[data-account-menu]');
+
+    function closeNav() {
+        if (!navButton || !navPanel) return;
+        navButton.setAttribute('aria-expanded', 'false');
+        navPanel.hidden = true;
+        navPanel.classList.remove('open');
+    }
+
+    function closeAccount() {
+        if (!accountButton || !accountMenu) return;
+        accountButton.setAttribute('aria-expanded', 'false');
+        accountMenu.hidden = true;
+        accountMenu.classList.remove('open');
+    }
+
+    if (navButton && navPanel) {
+        navButton.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const willOpen = navPanel.hidden;
+            closeAccount();
+            navPanel.hidden = !willOpen;
+            navPanel.classList.toggle('open', willOpen);
+            navButton.setAttribute('aria-expanded', String(willOpen));
+        });
+        navPanel.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', closeNav);
+        });
+    }
+
+    if (accountButton && accountMenu) {
+        accountButton.addEventListener('click', function (event) {
+            event.stopPropagation();
+            const willOpen = accountMenu.hidden;
+            closeNav();
+            accountMenu.hidden = !willOpen;
+            accountMenu.classList.toggle('open', willOpen);
+            accountButton.setAttribute('aria-expanded', String(willOpen));
+        });
+        accountMenu.addEventListener('click', function (event) { event.stopPropagation(); });
+    }
+
+    document.addEventListener('click', function () {
+        closeNav();
+        closeAccount();
+    });
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeNav();
+            closeAccount();
+        }
+    });
+    window.addEventListener('resize', function () {
+        if (window.innerWidth > 1180) closeNav();
+    });
+});
+</script>
+{% block extra_js %}{% endblock %}
+</body>
+</html>

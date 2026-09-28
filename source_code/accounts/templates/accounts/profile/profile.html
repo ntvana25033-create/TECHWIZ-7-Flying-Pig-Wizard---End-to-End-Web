@@ -1,0 +1,99 @@
+{% extends 'accounts/layouts/user_base.html' %}
+{% load static %}
+{% block title %}Profile | Campus Coin{% endblock %}
+{% block content %}
+<div class="page-head">
+    <div>
+        <p class="eyebrow">ACCOUNT</p>
+        <h1>Personal Profile</h1>
+        <p class="muted">Update your personal information, profile picture, and financial settings.</p>
+    </div>
+    <div class="inline-actions">
+        <a class="btn" href="{% url 'accounts:change_password' %}">Change password</a>
+        <a class="btn" href="{% url 'accounts:sessions' %}">Login Sessions</a>
+    </div>
+</div>
+
+<section class="card profile-card">
+    <form method="post" enctype="multipart/form-data" class="profile-form" novalidate>
+        {% csrf_token %}
+
+        <div class="profile-avatar-panel">
+            <div class="avatar-preview-wrap">
+                {% if user.profile.avatar_path %}
+                    <img id="avatarPreview" class="profile-avatar-image" src="{{ user.profile.avatar_path.url }}" alt="{{ user.get_full_name }} profile picture">
+                    <div id="avatarFallback" class="profile-avatar-fallback" hidden>{{ user.get_full_name|first|upper }}</div>
+                {% else %}
+                    <img id="avatarPreview" class="profile-avatar-image" src="" alt="Profile picture preview" hidden>
+                    <div id="avatarFallback" class="profile-avatar-fallback">{{ user.get_full_name|first|upper }}</div>
+                {% endif %}
+            </div>
+            <div class="avatar-upload-copy">
+                <h2>Profile picture</h2>
+                <p class="muted">Choose an image to display on your profile and account header.</p>
+                <div class="avatar-upload-control">
+                    <label class="file-picker" for="{{ form.avatar_path.id_for_label }}">Choose image</label>
+                    <div class="avatar-upload-meta">
+                        <strong>JPG, PNG, WEBP or GIF</strong>
+                        <span id="selectedAvatarName">{% if user.profile.avatar_path %}Current profile picture{% else %}No image selected{% endif %}</span>
+                    </div>
+                </div>
+                {{ form.avatar_path }}
+                {% if form.avatar_path.help_text %}<small class="profile-help">{{ form.avatar_path.help_text }}</small>{% endif %}
+                {% for error in form.avatar_path.errors %}<small class="error">{{ error }}</small>{% endfor %}
+                {% if user.profile.avatar_path %}
+                    <label class="remove-avatar-row" for="{{ form.remove_avatar.id_for_label }}">
+                        {{ form.remove_avatar }}
+                        <span>{{ form.remove_avatar.label }}</span>
+                    </label>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if form.non_field_errors %}<div class="panel-error">{{ form.non_field_errors }}</div>{% endif %}
+
+        <div class="profile-fields-grid">
+            <div class="profile-field">
+                <label for="{{ form.full_name.id_for_label }}">{{ form.full_name.label }}</label>
+                {{ form.full_name }}
+                {% for error in form.full_name.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+                {{ form.email }}
+                {% for error in form.email.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.academic_year.id_for_label }}">{{ form.academic_year.label }}</label>
+                {{ form.academic_year }}
+                {% for error in form.academic_year.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.currency_code.id_for_label }}">{{ form.currency_code.label }}</label>
+                {{ form.currency_code }}
+                {% for error in form.currency_code.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.monthly_allowance.id_for_label }}">{{ form.monthly_allowance.label }}</label>
+                {{ form.monthly_allowance }}
+                {% for error in form.monthly_allowance.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field">
+                <label for="{{ form.monthly_savings_goal.id_for_label }}">{{ form.monthly_savings_goal.label }}</label>
+                {{ form.monthly_savings_goal }}
+                {% for error in form.monthly_savings_goal.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+            <div class="profile-field span-all">
+                <label for="{{ form.timezone.id_for_label }}">{{ form.timezone.label }}</label>
+                {{ form.timezone }}
+                {% for error in form.timezone.errors %}<small class="error">{{ error }}</small>{% endfor %}
+            </div>
+        </div>
+
+        <div class="profile-actions">
+            <button class="btn primary" type="submit">Save changes</button>
+        </div>
+    </form>
+</section>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/profile.js' %}?v=20260926-profile-final"></script>{% endblock %}

@@ -1,0 +1,28 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}Transaction Management | Campus Coin{% endblock %}
+{% block page_name %}Transaction Management{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><span class="admin-section-kicker">TRANSACTIONS</span><h1>All System Transactions</h1><p>Search and review system-wide transactions.</p></div><a class="btn" href="{% url 'transactions:admin-category-list' %}">Category Management</a></div>
+<section class="admin-card transaction-admin-search">
+    <form class="admin-filters transaction-admin-filters" method="get">
+        <input class="form-control search-wide" type="search" name="q" value="{{ search_query }}" placeholder="Student, email, description, category, amount, date or ID">
+        <select class="form-control" name="type">
+            <option value="">All types</option>
+            <option value="income" {% if selected_type == 'income' %}selected{% endif %}>Income</option>
+            <option value="expense" {% if selected_type == 'expense' %}selected{% endif %}>Expense</option>
+        </select>
+        <select class="form-control" name="category">
+            <option value="">All categories</option>
+            {% for category in search_categories %}<option value="{{ category.pk }}" {% if selected_category == category.pk|stringformat:'s' %}selected{% endif %}>{{ category.name }} ({{ category.get_type_display }})</option>{% endfor %}
+        </select>
+        <input class="form-control" type="date" name="date_from" value="{{ date_from }}" title="From date">
+        <input class="form-control" type="date" name="date_to" value="{{ date_to }}" title="To date">
+        <button class="btn primary" type="submit">Search</button>
+        <a class="btn" href="{% url 'transactions:admin-transaction-list' %}">Clear</a>
+    </form>
+</section>
+<section class="admin-card"><div class="table-wrap"><table><thead><tr><th>User</th><th>Date</th><th>Category</th><th>Type</th><th class="money">Amount</th><th>Description</th></tr></thead><tbody>
+{% for txn in transactions %}<tr><td><strong>{{ txn.user.email }}</strong>{% if txn.user.profile.full_name %}<br><small class="muted">{{ txn.user.profile.full_name }}</small>{% endif %}</td><td>{{ txn.date|date:"M d, Y" }}</td><td>{{ txn.category.name|default:"Uncategorized" }}</td><td><span class="pill {{ txn.type }}">{{ txn.get_type_display }}</span></td><td class="money">${{ txn.amount|floatformat:2 }}</td><td>{{ txn.description|default:"—" }}</td></tr>{% empty %}<tr><td colspan="6" class="empty">No transactions match the current search or filters.</td></tr>{% endfor %}
+</tbody></table></div></section>
+{% endblock %}
+{% block extra_head %}<style>.transaction-admin-search{margin-bottom:16px}.transaction-admin-filters{grid-template-columns:minmax(260px,2fr) repeat(4,minmax(125px,1fr)) auto auto}.transaction-admin-filters .search-wide{min-width:0}@media(max-width:1200px){.transaction-admin-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.transaction-admin-filters .search-wide{grid-column:1/-1}}@media(max-width:700px){.transaction-admin-filters{grid-template-columns:1fr}.transaction-admin-filters .search-wide{grid-column:auto}}</style>{% endblock %}

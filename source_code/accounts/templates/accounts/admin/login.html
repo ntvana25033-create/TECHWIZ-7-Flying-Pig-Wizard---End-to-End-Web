@@ -1,0 +1,14 @@
+{% extends 'accounts/layouts/auth_base.html' %}{% load static %}
+{% block title %}Admin Sign In | Campus Coin{% endblock %}
+{% block content %}
+<div class="auth-card-head"><span class="auth-kicker">ADMIN PORTAL</span><h2>Administrator sign in</h2><p>Sign in with an authorized administrator account to continue.</p></div>
+<form method="post" class="auth-form" novalidate>
+    {% csrf_token %}
+    {% if form.non_field_errors %}<div class="alert error">{{ form.non_field_errors }}</div>{% endif %}
+    {% include 'accounts/partials/field.html' with field=form.email %}
+    <div class="password-field">{% include 'accounts/partials/field.html' with field=form.password %}<button type="button" class="password-toggle" data-toggle-password="id_password">Show</button></div>
+    <button class="primary-btn" type="submit"><span>Enter Admin Portal</span><span>→</span></button>
+</form>
+<div class="auth-footer"><span>Student account?</span><a href="{% url 'accounts:login' %}">User Sign In</a></div>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'accounts/js/register.js' %}?v=20260926"></script>{% endblock %}

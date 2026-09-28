@@ -1,0 +1,7 @@
+{% extends 'accounts/layouts/admin_base.html' %}
+{% block title %}{% if mode == 'create' %}Create account{% else %}Edit account{% endif %} | Campus Coin{% endblock %}
+{% block page_name %}{% if mode == 'create' %}Create account{% else %}Edit account{% endif %}{% endblock %}
+{% block content %}
+<div class="admin-page-head"><div><a class="back-link" href="{% if target %}{% url 'accounts:admin_user_detail' target.user_id %}{% else %}{% url 'accounts:admin_user_list' %}{% endif %}">← Back</a><h1>{% if mode == 'create' %}Create New Account{% else %}Update Account{% endif %}</h1><p>{% if mode == 'create' %}Create a User or Admin with the appropriate access permissions.{% else %}Change account information, role, and access status.{% endif %}</p></div></div>
+<section class="admin-card admin-form-card"><form method="post" class="admin-form">{% csrf_token %}{% if form.non_field_errors %}<div class="message error">{{ form.non_field_errors }}</div>{% endif %}{{ form.as_p }}<div class="admin-actions"><button class="btn primary" type="submit">{% if mode == 'create' %}Create account{% else %}Save changes{% endif %}</button><a class="btn" href="{% if target %}{% url 'accounts:admin_user_detail' target.user_id %}{% else %}{% url 'accounts:admin_user_list' %}{% endif %}">Cancel</a></div></form></section>
+{% endblock %}
