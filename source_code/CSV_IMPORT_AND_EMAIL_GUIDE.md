@@ -46,10 +46,16 @@ EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 EMAIL_TIMEOUT=20
 DEFAULT_FROM_EMAIL=Campus Coin <your_email@gmail.com>
-PUBLIC_BASE_URL=http://127.0.0.1:8000
+PUBLIC_BASE_URL=auto
+AUTO_BASE_URL_SCHEME=http
+AUTO_BASE_URL_PORT=8000
 ```
 
 Use a Google App Password rather than your normal Gmail password. Enable Google 2-Step Verification first, create an App Password, and put that value in `EMAIL_HOST_PASSWORD`.
+
+`PUBLIC_BASE_URL=auto` makes email links use the LAN IPv4 address of the machine running Django. To let other devices on the same Wi-Fi/LAN open those links, start Django with `py manage.py runserver 0.0.0.0:8000` and allow the LAN host in `ALLOWED_HOSTS` (for a temporary local demo, `ALLOWED_HOSTS=*` is acceptable).
+
+For production or a public tunnel/domain, do not use auto detection. Set a fixed value instead, for example `PUBLIC_BASE_URL=https://your-domain.example`. Devices outside the same LAN cannot reach a private `192.168.x.x`/`10.x.x.x` address.
 
 Test SMTP:
 

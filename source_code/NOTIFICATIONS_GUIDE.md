@@ -91,10 +91,14 @@ EMAIL_HOST_PASSWORD=your_google_app_password
 EMAIL_USE_TLS=True
 EMAIL_USE_SSL=False
 DEFAULT_FROM_EMAIL=Campus Coin <your_email@gmail.com>
-PUBLIC_BASE_URL=http://127.0.0.1:8000
+PUBLIC_BASE_URL=auto
+AUTO_BASE_URL_SCHEME=http
+AUTO_BASE_URL_PORT=8000
 ```
 
 Use a Google App Password, not the normal Gmail password.
+
+With `PUBLIC_BASE_URL=auto`, notification links use the LAN IPv4 address of the machine running Django. For a LAN demo, run `py manage.py runserver 0.0.0.0:8000`. For a real deployment, set `PUBLIC_BASE_URL` to the public HTTPS domain instead.
 
 You can test SMTP first with:
 

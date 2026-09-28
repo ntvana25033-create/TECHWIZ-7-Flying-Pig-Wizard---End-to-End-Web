@@ -65,6 +65,14 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+For access from other devices on the same Wi-Fi/LAN, use:
+
+```bash
+py manage.py runserver 0.0.0.0:8000
+```
+
+When using LAN access, set `PUBLIC_BASE_URL=auto`. In a private local `.env`, `ALLOWED_HOSTS=*` can be used for a temporary demo; for production, list the real host/domain explicitly.
+
 Users sign in at `/account/login/`.
 
 Admins sign in at `/account/admin-account/login/`.
